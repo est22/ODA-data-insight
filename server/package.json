@@ -1,0 +1,20 @@
+{
+  "name": "undp",
+  "version": "1.0.0",
+  "description": "a full-stack application that explores relationships between Korea's Official Development Assistance (ODA) and another dataset",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "moment": "^2.30.1",
+    "nodemon": "^3.1.9",
+    "sqlite3": "^5.1.7"
+  }
+}
