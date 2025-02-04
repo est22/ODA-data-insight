@@ -1,10 +1,19 @@
 const fs = require('fs');
+const path = require('path');
 const csv = require('csv-parser');
 const Database = require('better-sqlite3');
-const dbFile = 'oda_korea_dataset.db';
+
+// Define database directory and file path
+const dbDir = path.join(__dirname, '../data');  // server/data 
+const dbFile = path.join(dbDir, 'oda_korea_dataset.db');
 
 // DB initialize
 const initializeDatabase = () => {
+    // Create database directory if it doesn't exist
+    if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+    }
+
     const db = new Database(dbFile);
 
     // create table
@@ -81,7 +90,9 @@ const initializeDatabase = () => {
 
     // read CSV file and insert data
     const rows = [];
-    fs.createReadStream('server/models/oda_korea_dataset.csv')
+    const csvPath = path.join(__dirname, 'oda_korea_dataset.csv');
+    
+    fs.createReadStream(csvPath)
         .pipe(csv())
         .on('data', (row) => rows.push(row))
         .on('end', () => {
@@ -102,5 +113,6 @@ if (!fs.existsSync(dbFile)) {
 }
 
 module.exports = {
-    initializeDatabase
+    initializeDatabase,
+    dbFile  // Export dbFile path for other modules to use
 };
