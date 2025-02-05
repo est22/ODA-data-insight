@@ -3,116 +3,97 @@ const path = require('path');
 const csv = require('csv-parser');
 const Database = require('better-sqlite3');
 
-// Define database directory and file path
-const dbDir = path.join(__dirname, '../data');  // server/data 
-const dbFile = path.join(dbDir, 'oda_korea_dataset.db');
+// create DB
+const db = new Database('ODA.db');
 
-// DB initialize
-const initializeDatabase = () => {
-    // Create database directory if it doesn't exist
-    if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
-    }
+// create ODA database table
+db.prepare(`CREATE TABLE IF NOT EXISTS oda_data (
+    project_number TEXT,
+    year INTEGER,
+    recipient_name TEXT,
+    project_title TEXT,
+    purpose_code TEXT,
+    sdg_focus TEXT,
+    usd_commitment REAL,
+    usd_disbursement REAL,
+    gender INTEGER,
+    environment INTEGER,
+    trade INTEGER
+)`).run();
 
-    const db = new Database(dbFile);
+// create SDG indicators table
+db.prepare(`CREATE TABLE IF NOT EXISTS sdg_indicators (
+    sector TEXT,
+    strategic_goal TEXT,
+    program TEXT,
+    performance_indicators TEXT,
+    output_indicators TEXT
+)`).run();
 
-    // create table
-    db.prepare(`CREATE TABLE IF NOT EXISTS oda_data (
-        project_number TEXT,
-        year INTEGER,
-        donor_name TEXT,
-        agency_name TEXT,
-        crs_id TEXT,
-        recipient_name TEXT,
-        channel_code INTEGER,
-        nature_of_submission TEXT,
-        bi_multi TEXT,
-        finance_t TEXT,
-        aid_t TEXT,
-        flow_code TEXT,
-        project_title TEXT,
-        purpose_code INTEGER,
-        sdg_focus TEXT,
-        expected_start_date TEXT,
-        completion_date TEXT,
-        gender INTEGER,
-        environment INTEGER,
-        dig INTEGER,
-        trade INTEGER,
-        rmnch INTEGER,
-        drr INTEGER,
-        disability INTEGER,
-        nutrition INTEGER,
-        ftc INTEGER,
-        pba INTEGER,
-        investment_project INTEGER,
-        project_type_intervention INTEGER,
-        blended_finance_type INTEGER,
-        biodiversity INTEGER,
-        climate_mitigation INTEGER,
-        climate_adaptation INTEGER,
-        desertification INTEGER,
-        usd_commitment REAL,
-        usd_disbursement REAL,
-        usd_received REAL,
-        usd_adjustment REAL,
-        usd_grant_equiv REAL,
-        usd_amount_untied REAL,
-        usd_amount_partial_tied REAL,
-        usd_amount_tied REAL,
-        usd_irtc REAL,
-        usd_export_credit REAL,
-        commitment_date TEXT,
-        type_repayment TEXT,
-        number_repayment INTEGER,
-        interest1 REAL,
-        repaydate1 TEXT,
-        repaydate2 TEXT,
-        usd_interest REAL,
-        usd_outstanding REAL,
-        usd_arrears_principal REAL,
-        usd_arrears_interest REAL,
-        usd_outstanding_next_year REAL,
-        usd_interest_next_year REAL,
-        recipient_code INTEGER,
-        nature_of_submission_disbursement TEXT
-    )`).run();
+// insert ODA data
+const odaRows = [];
+fs.createReadStream(path.join(__dirname, '../data/oda_korea_dataset.csv'))
+    .pipe(csv())
+    .on('data', (row) => odaRows.push(row))
+    .on('end', () => {
+        const insert = db.prepare(`INSERT INTO oda_data VALUES (
+            @project_number, @year, @recipient_name, @project_title, 
+            @purpose_code, @sdg_focus, @usd_commitment, @usd_disbursement,
+            @gender, @environment, @trade
+        )`);
 
-    // prepared statement for inserting CSV data
-    const insertStmt = db.prepare(`INSERT INTO oda_data VALUES (${Array(58).fill('?').join(', ')})`);
-
-    // insert data using transaction
-    const insertMany = db.transaction((rows) => {
-        for (const row of rows) {
-            insertStmt.run(Object.values(row));
-        }
-    });
-
-    // read CSV file and insert data
-    const rows = [];
-    const csvPath = path.join(__dirname, 'oda_korea_dataset.csv');
-    
-    fs.createReadStream(csvPath)
-        .pipe(csv())
-        .on('data', (row) => rows.push(row))
-        .on('end', () => {
-            try {
-                insertMany(rows);
-                console.log('CSV file processing completed.');
-                db.close();
-            } catch (err) {
-                console.error('Error inserting data:', err);
-                db.close();
+        const insertMany = db.transaction((rows) => {
+            for (const row of rows) {
+                insert.run({
+                    project_number: row.project_number,
+                    year: parseInt(row.year),
+                    recipient_name: row.recipient_name,
+                    project_title: row.project_title,
+                    purpose_code: row.purpose_code,
+                    sdg_focus: row.sdg_focus,
+                    usd_commitment: parseFloat(row.usd_commitment),
+                    usd_disbursement: parseFloat(row.usd_disbursement),
+                    gender: parseInt(row.gender),
+                    environment: parseInt(row.environment),
+                    trade: parseInt(row.trade)
+                });
             }
         });
-};
 
-// initialize DB if file does not exist
-if (!fs.existsSync(dbFile)) {
-    initializeDatabase();
-}
+        insertMany(odaRows);
+        console.log('ODA data imported');
+    });
 
-module.exports = {
-    initializeDatabase,
-    dbFile  // Export dbFile path for other modules to use
-};
+// insert SDG indicators data
+const sdgRows = [];
+fs.createReadStream(path.join(__dirname, '../data/한국국제협력단_SDG 분야별 성과지표_20230901.csv'), 
+    { encoding: 'utf8' })
+    .pipe(csv())
+    .on('data', (row) => sdgRows.push(row))
+
+    
+    
+    .on('end', () => {
+        const insert = db.prepare(`INSERT INTO sdg_indicators VALUES (
+            @sector, @strategic_goal, @program, 
+            @performance_indicators, @output_indicators
+        )`);
+
+        const insertMany = db.transaction((rows) => {
+            for (const row of rows) {
+                                
+                insert.run({
+                    sector: row['분야'],
+                    strategic_goal: row['전략목표'],
+                    program: row['프로그램'],
+                    performance_indicators: row['성과'],
+                    output_indicators: row['산출물']
+                });
+            }
+        });
+
+        insertMany(sdgRows);
+        console.log('SDG indicators imported');
+    });
+
+module.exports = { db };
