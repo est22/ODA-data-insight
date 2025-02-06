@@ -1,26 +1,32 @@
 import { Box, Container, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import StrategicOverview from '../components/StrategicAnalysis/StrategicOverview';
-import SectorComparison from '../components/StrategicAnalysis/SectorComparison';
+import CountryMap from '../components/StrategicAnalysis/CountryMap';
 import LoadingState from '../components/Common/LoadingState';
 import ErrorState from '../components/Common/ErrorState';
 
 function Dashboard() {
-    const { data, isLoading, error } = useQuery(
+    // Strategic goals data
+    const { data: strategicData, error: strategicError } = useQuery(
         ['strategicGoals'],
         async () => {
             const response = await fetch('/strategic-goals');
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            return result;
-        },
-        { staleTime: 5 * 60 * 1000 } // 5 minutes cache
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        }
     );
 
-    if (isLoading) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
+    // Country investment data
+    const { data: countryData, error: countryError } = useQuery(
+        ['countryInvestments'],
+        async () => {
+            const response = await fetch('/country-investments');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        }
+    );
 
-    const { data: strategicData, metadata } = data;
+    if (strategicError || countryError) return <ErrorState error={strategicError || countryError} />;
 
     return (
         <Container maxWidth="xl">
@@ -29,19 +35,26 @@ function Dashboard() {
                     KOICA Tech Innovation Analysis
                 </Typography>
                 
-                {/* Overview Cards */}
-                <Box sx={{ mb: 4 }}>
-                    <StrategicOverview 
-                        totalProjects={metadata.totalProjects}
-                        totalInvestment={metadata.totalInvestment}
-                        sectors={metadata.sectors}
-                    />
-                </Box>
+                {strategicData ? (
+                    <>
+                        <Box sx={{ mb: 4 }}>
+                            <StrategicOverview 
+                                totalProjects={strategicData.metadata.totalProjects}
+                                totalInvestment={strategicData.metadata.totalInvestment}
+                                sectors={strategicData.metadata.sectors}
+                                sectorDetails={strategicData.data}
+                            />
+                        </Box>
 
-                {/* Sector Comparison */}
-                <Box sx={{ mb: 4 }}>
-                    <SectorComparison data={strategicData} />
-                </Box>
+                        <Box sx={{ mb: 4 }}>
+                            <CountryMap data={countryData} />
+                        </Box>
+                    </>
+                ) : (
+                    <Box sx={{ height: '200px' }}>
+                        <LoadingState />
+                    </Box>
+                )}
             </Box>
         </Container>
     );

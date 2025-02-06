@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getSDGPerformanceAnalysis, getStrategicGoalsAnalysis, getTechInvestmentImpact } = require('../models/techInnovationQueries');
+const { getSDGPerformanceAnalysis, getStrategicGoalsAnalysis, getTechInvestmentImpact, getPerformanceTimeline } = require('../models/techInnovationQueries');
 
 
 
@@ -51,7 +51,7 @@ router.get('/strategic-goals', (req, res) => {
 // Performance timeline analysis
 router.get('/performance-timeline', (req, res) => {
     try {
-        res.json(mockData.timeline);
+        res.json(getPerformanceTimeline());
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

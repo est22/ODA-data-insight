@@ -19,22 +19,28 @@ const techInvestmentStmt = db.prepare(`
     ORDER BY total_investment DESC
 `);
 
+// Project outputs query
 const projectOutputsStmt = db.prepare(`
     SELECT 
         recipient_name,
         project_title,
         purpose_code,
+        year,
         usd_commitment,
         usd_disbursement,
         ROUND((usd_disbursement / usd_commitment) * 100, 2) as execution_rate,
-        sdg_focus
+        sdg_focus,
+        gender
     FROM oda_data
-    WHERE project_title LIKE '%research%' 
+    WHERE (
+        project_title LIKE '%research%' 
         OR project_title LIKE '%innovation%'
         OR project_title LIKE '%technology%'
         OR project_title LIKE '%digital%'
         OR project_title LIKE '%ICT%'
+    )
     AND usd_commitment > 0
+    AND purpose_code IN ('11182', '32182', '22081', '22040')
     ORDER BY usd_commitment DESC
 `);
 
@@ -113,5 +119,22 @@ const getStrategicGoalsAnalysis = () => {
 
 // Export functions
 module.exports = {
-    getStrategicGoalsAnalysis
+    getTechInvestmentImpact: () => techInvestmentStmt.all(),
+    getProjectOutputs: () => projectOutputsStmt.all(),
+    getSDGPerformanceAnalysis: () => sdgAnalysisStmt.all(),
+    getStrategicGoalsAnalysis,
+    getPerformanceTimeline: () => {
+        const timelineStmt = db.prepare(`
+            SELECT 
+                year,
+                COUNT(DISTINCT project_number) as projects,
+                ROUND(SUM(usd_commitment) / 1000000, 2) as investment_million_usd,
+                COUNT(DISTINCT recipient_name) as countries
+            FROM oda_data
+            WHERE purpose_code IN ('11182', '32182', '22081', '22040')
+            GROUP BY year
+            ORDER BY year DESC
+        `);
+        return timelineStmt.all();
+    }
 }; 
