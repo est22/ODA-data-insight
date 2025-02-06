@@ -27,24 +27,23 @@ router.get('/sdg-performance', (req, res) => {
 // Strategic goals analysis
 router.get('/strategic-goals', (req, res) => {
     try {
-        console.time('strategic-goals-query');
+        console.log('Fetching strategic goals data...');
         const results = getStrategicGoalsAnalysis();
-        console.timeEnd('strategic-goals-query');
         
-        res.json({
-            success: true,
-            data: results,
-            metadata: {
-                sectors: [...new Set(results.map(r => r.sector))],
-                totalProjects: results.reduce((sum, r) => sum + r.project_count, 0),
-                totalInvestment: results.reduce((sum, r) => sum + r.total_investment_million_usd, 0)
-            }
-        });
+        // Debug log
+        console.log('Strategic goals results:', results ? 'Data exists' : 'No data');
+        
+        if (!results) {
+            throw new Error('Strategic goals data not available');
+        }
+        
+        res.json(results);
     } catch (error) {
         console.error('Error in /strategic-goals:', error);
         res.status(500).json({ 
             success: false, 
-            error: error.message 
+            error: error.message || 'Internal server error',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });

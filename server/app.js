@@ -1,18 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const techInnovationRoutes = require('./routes/techInnovationRoutes');
 
 const app = express();
 const port = 8000;
 
-// middleware
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// tech innovation routes
+// Routes
 app.use('/', techInnovationRoutes);
 
-
-// start server
+// Start server
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });

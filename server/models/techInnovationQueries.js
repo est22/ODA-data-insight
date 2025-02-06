@@ -54,118 +54,64 @@ const sdgAnalysisStmt = db.prepare(`
     ORDER BY total_investment_million DESC
 `);
 
-// cache key constants
-const CACHE_KEYS = {
-    STRATEGIC_GOALS: 'strategic_goals_analysis'
-};
-
-// cache time to live
-const CACHE_TTL = 60 * 60 * 1000;
-
-// memory cache object
-let memoryCache = {};
-
-// get strategic goals analysis
-const getStrategicGoalsAnalysis = () => {
-    const cachedData = memoryCache[CACHE_KEYS.STRATEGIC_GOALS];
-    if (cachedData && (Date.now() - cachedData.timestamp < CACHE_TTL)) {
-        return cachedData.data;
-    }
-    // query to get strategic goals analysis
-    const query = `
-        WITH project_categories AS (
-            SELECT 
-                CASE 
-                    WHEN project_title LIKE '%research%' OR project_title LIKE '%innovation%' 
-                        OR project_title LIKE '%digital%' OR project_title LIKE '%ICT%'
-                        THEN '과학기술혁신'
-                    WHEN project_title LIKE '%education%' OR project_title LIKE '%training%' 
-                        THEN '교육'
-                END as project_sector,
-                project_number,
-                recipient_name,
-                usd_commitment,
-                usd_disbursement
-            FROM oda_data
-            WHERE purpose_code IN ('11182', '32182', '22081', '22040')
-            AND project_sector IS NOT NULL
-        )
+// Prepare statement for better performance
+const strategicGoalsStmt = db.prepare(`
+    WITH project_stats AS (
         SELECT 
-            i.sector,
-            i.strategic_goal,
-            i.program,
-            COUNT(DISTINCT p.project_number) as project_count,
-            ROUND(SUM(p.usd_commitment) / 1000000, 2) as total_investment_million_usd,
-            ROUND((SUM(p.usd_disbursement) / SUM(p.usd_commitment)) * 100, 2) as execution_rate,
-            COUNT(DISTINCT p.recipient_name) as country_count,
-            i.performance_indicators,
-            i.output_indicators
-        FROM sdg_indicators i
-        LEFT JOIN project_categories p ON i.sector = p.project_sector
-        WHERE i.sector IN ('과학기술혁신', '교육')
-        GROUP BY i.sector, i.strategic_goal, i.program
-        HAVING project_count > 0
-        ORDER BY total_investment_million_usd DESC
-    `;
+            CASE 
+                WHEN project_title LIKE '%research%' OR project_title LIKE '%innovation%' 
+                    OR project_title LIKE '%digital%' OR project_title LIKE '%ICT%'
+                    THEN '과학기술혁신'
+                WHEN project_title LIKE '%education%' OR project_title LIKE '%training%' 
+                    THEN '교육'
+            END as matched_sector,
+            COUNT(DISTINCT project_number) as proj_count,
+            ROUND(SUM(usd_commitment) / 1000000, 2) as total_investment
+        FROM oda_data
+        WHERE purpose_code IN ('11182', '32182', '22081', '22040')
+        GROUP BY matched_sector
+    )
+    SELECT 
+        i.sector,
+        i.strategic_goal,
+        i.program,
+        COALESCE(p.proj_count, 0) as project_count,
+        COALESCE(p.total_investment, 0) as total_investment_million_usd,
+        i.performance_indicators,
+        i.output_indicators
+    FROM sdg_indicators i
+    LEFT JOIN project_stats p ON i.sector = p.matched_sector
+    WHERE i.sector IN ('과학기술혁신', '교육')
+    AND p.proj_count > 0
+    ORDER BY p.total_investment DESC
+`);
 
+// Simplified cache
+let cache = null;
+
+// Simple query function
+const getStrategicGoalsAnalysis = () => {
+    if (cache) return cache;
+    
     try {
-        // execute query
-        const results = db.prepare(query).all();
-        
-        // cache results
-        memoryCache[CACHE_KEYS.STRATEGIC_GOALS] = {
-            timestamp: Date.now(),
-            data: results
+        const strategicData = strategicGoalsStmt.all();
+        cache = {
+            success: true,
+            data: strategicData,
+            metadata: {
+                sectors: [...new Set(strategicData.map(r => r.sector))],
+                totalProjects: strategicData.reduce((sum, r) => sum + r.project_count, 0),
+                totalInvestment: strategicData.reduce((sum, r) => sum + r.total_investment_million_usd, 0)
+            }
         };
-
-        return results;
+        return cache;
     } catch (error) {
-        console.error('Error in getStrategicGoalsAnalysis:', error);
+        console.error('Query execution failed:', error);
         throw error;
     }
 };
 
-// get performance timeline analysis
-const getPerformanceTimeline = () => {
-    const query = `
-        SELECT 
-            o.year,
-            i.sector,
-            i.strategic_goal,
-            COUNT(DISTINCT o.project_number) as projects,
-            ROUND(SUM(o.usd_commitment) / 1000000, 2) as investment_million_usd,
-            ROUND(AVG(o.gender) * 100, 2) as gender_focus_percentage,
-            COUNT(DISTINCT o.recipient_name) as countries
-        FROM oda_data o
-        JOIN sdg_indicators i ON 
-            CASE 
-                WHEN o.project_title LIKE '%research%' OR o.project_title LIKE '%innovation%' 
-                    THEN i.sector = '과학기술혁신'
-                WHEN o.project_title LIKE '%education%' OR o.project_title LIKE '%training%' 
-                    THEN i.sector = '교육'
-            END
-        WHERE o.year BETWEEN 2018 AND 2023
-        GROUP BY o.year, i.sector, i.strategic_goal
-        ORDER BY o.year DESC, investment_million_usd DESC
-    `;
-    return db.prepare(query).all();
-};
-
-// Export functions with the same names as before
+// Export functions
 module.exports = {
-    getTechInvestmentImpact: () => {
-        try {
-            // fetch data from source
-            const results = techInvestmentStmt.all();
-            console.log('Data fetched from source');
-            return results;
-        } catch (error) {
-            console.error('Error in getTechInvestmentImpact:', error);
-            throw error;
-        }
-    },
-    getProjectOutputs: () => projectOutputsStmt.all(),
-    getSDGPerformanceAnalysis: () => sdgAnalysisStmt.all(),
-    getStrategicGoalsAnalysis: () => getStrategicGoalsAnalysis(),
-    getPerformanceTimeline: () => getPerformanceTimeline()
+    getStrategicGoalsAnalysis
 }; 
