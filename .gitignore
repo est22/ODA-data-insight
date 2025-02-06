@@ -1,6 +1,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/node,vuejs,react
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,vuejs,react
 
+# DB
+server/ODA.db
+server/data/ODA.db
+
 ### Node ###
 # Logs
 logs
@@ -154,11 +158,5 @@ psd
 thumb
 sketch
 
-### Vuejs ###
-# Recommended template: Node.gitignore
-
-dist/
-npm-debug.log
-yarn-error.log
 
 # End of https://www.toptal.com/developers/gitignore/api/node,vuejs,react
