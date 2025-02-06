@@ -42,52 +42,59 @@ function Dashboard() {
     return (
         <Container maxWidth="xl">
             <Box sx={{ py: 4 }}>
-                <Typography variant="h4" gutterBottom>
-                    KOICA Tech Innovation Analysis
-                </Typography>
-                
-                {strategicData ? (
-                    <>
-                        <Box sx={{ mb: 4 }}>
+                {/* Header row with title and stats */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 4,
+                    mb: 3
+                }}>
+                    {/* Title */}
+                    <Typography variant="h4" sx={{ flex: 1 }}>
+                        Tech Innovation SDG Analysis
+                    </Typography>
+
+                    {/* Stats banner */}
+                    <Box sx={{ display: 'flex', gap: 2, flex: 2 }}>
+                        {strategicData && (
                             <StrategicOverview 
                                 totalProjects={strategicData.metadata.totalProjects}
                                 totalInvestment={strategicData.metadata.totalInvestment}
                                 sectors={strategicData.metadata.sectors}
-                                sectorDetails={strategicData.data}
+                            />
+                        )}
+                    </Box>
+                </Box>
+                
+                {/* Main content */}
+                {strategicData ? (
+                    <Box sx={{ 
+                        display: 'flex', 
+                        gap: 3,
+                        height: 'calc(100vh - 180px)'
+                    }}>
+                        <Box sx={{ flex: 3 }}>
+                            {selectedCountry ? (
+                                <CountryDetail 
+                                    country={selectedCountry}
+                                    onClose={() => setSelectedCountry(null)}
+                                />
+                            ) : (
+                                <CountryMap 
+                                    data={countryData} 
+                                    onCountrySelect={handleCountrySelect}
+                                />
+                            )}
+                        </Box>
+
+                        <Box sx={{ flex: 1 }}>
+                            <RankingPanel 
+                                data={countryData}
+                                onCountrySelect={handleCountrySelect}
+                                selectedCountry={selectedCountry}
                             />
                         </Box>
-
-                        {/* 전체 높이를 제한하여 지도가 화면에 딱 맞도록 설정 */}
-                        <Box sx={{ 
-                            display: 'flex', 
-                            gap: 3,
-                            height: 'calc(100vh - 380px)' // 상단 여백, 헤더, Overview 높이 등을 고려한 값
-                        }}>
-                            {/* Left: Map area */}
-                            <Box sx={{ flex: 3 }}>
-                                {selectedCountry ? (
-                                    <CountryDetail 
-                                        country={selectedCountry}
-                                        onClose={() => setSelectedCountry(null)}
-                                    />
-                                ) : (
-                                    <CountryMap 
-                                        data={countryData} 
-                                        onCountrySelect={handleCountrySelect}
-                                    />
-                                )}
-                            </Box>
-
-                            {/* Right: Scrollable ranking panel */}
-                            <Box sx={{ flex: 1 }}>
-                                <RankingPanel 
-                                    data={countryData}
-                                    onCountrySelect={handleCountrySelect}
-                                    selectedCountry={selectedCountry}
-                                />
-                            </Box>
-                        </Box>
-                    </>
+                    </Box>
                 ) : <LoadingState />}
             </Box>
         </Container>
