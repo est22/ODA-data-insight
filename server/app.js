@@ -1,7 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const { initializeDatabase } = require('./models/model');
-const techInnovationRoutes = require('./routes/techInnovationRoutes');
 
 const app = express();
 const port = 8000;

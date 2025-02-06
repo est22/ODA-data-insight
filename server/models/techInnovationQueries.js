@@ -10,20 +10,13 @@ console.log(`SDG indicators records: ${sdgCount.count}`);
 // Prepare statements for frequently used queries
 const techInvestmentStmt = db.prepare(`
     SELECT 
-        year,
         recipient_name,
-        purpose_code,
-        project_title,
         SUM(usd_commitment) as total_investment,
-        COUNT(DISTINCT project_number) as project_count,
-        gender,
-        environment,
-        trade,
-        sdg_focus
+        COUNT(DISTINCT project_number) as project_count
     FROM oda_data
     WHERE purpose_code IN ('11182', '32182', '22081', '22040', '114%', '321%')
-    GROUP BY year, recipient_name, purpose_code
-    ORDER BY year DESC, total_investment DESC
+    GROUP BY recipient_name
+    ORDER BY total_investment DESC
 `);
 
 const projectOutputsStmt = db.prepare(`
@@ -61,22 +54,41 @@ const sdgAnalysisStmt = db.prepare(`
     ORDER BY total_investment_million DESC
 `);
 
-// Strategic goals achievement analysis
+// cache key constants
+const CACHE_KEYS = {
+    STRATEGIC_GOALS: 'strategic_goals_analysis'
+};
+
+// cache time to live
+const CACHE_TTL = 60 * 60 * 1000;
+
+// memory cache object
+let memoryCache = {};
+
+// get strategic goals analysis
 const getStrategicGoalsAnalysis = () => {
+    const cachedData = memoryCache[CACHE_KEYS.STRATEGIC_GOALS];
+    if (cachedData && (Date.now() - cachedData.timestamp < CACHE_TTL)) {
+        return cachedData.data;
+    }
+    // query to get strategic goals analysis
     const query = `
         WITH project_categories AS (
             SELECT 
                 CASE 
                     WHEN project_title LIKE '%research%' OR project_title LIKE '%innovation%' 
+                        OR project_title LIKE '%digital%' OR project_title LIKE '%ICT%'
                         THEN '과학기술혁신'
                     WHEN project_title LIKE '%education%' OR project_title LIKE '%training%' 
                         THEN '교육'
-                    WHEN project_title LIKE '%digital%' OR project_title LIKE '%ICT%' 
-                        THEN '과학기술혁신'
                 END as project_sector,
-                *
+                project_number,
+                recipient_name,
+                usd_commitment,
+                usd_disbursement
             FROM oda_data
             WHERE purpose_code IN ('11182', '32182', '22081', '22040')
+            AND project_sector IS NOT NULL
         )
         SELECT 
             i.sector,
@@ -87,8 +99,7 @@ const getStrategicGoalsAnalysis = () => {
             ROUND((SUM(p.usd_disbursement) / SUM(p.usd_commitment)) * 100, 2) as execution_rate,
             COUNT(DISTINCT p.recipient_name) as country_count,
             i.performance_indicators,
-            i.output_indicators,
-            GROUP_CONCAT(DISTINCT p.project_title) as sample_projects
+            i.output_indicators
         FROM sdg_indicators i
         LEFT JOIN project_categories p ON i.sector = p.project_sector
         WHERE i.sector IN ('과학기술혁신', '교육')
@@ -96,10 +107,25 @@ const getStrategicGoalsAnalysis = () => {
         HAVING project_count > 0
         ORDER BY total_investment_million_usd DESC
     `;
-    return db.prepare(query).all();
+
+    try {
+        // execute query
+        const results = db.prepare(query).all();
+        
+        // cache results
+        memoryCache[CACHE_KEYS.STRATEGIC_GOALS] = {
+            timestamp: Date.now(),
+            data: results
+        };
+
+        return results;
+    } catch (error) {
+        console.error('Error in getStrategicGoalsAnalysis:', error);
+        throw error;
+    }
 };
 
-// Performance timeline analysis
+// get performance timeline analysis
 const getPerformanceTimeline = () => {
     const query = `
         SELECT 
@@ -127,7 +153,17 @@ const getPerformanceTimeline = () => {
 
 // Export functions with the same names as before
 module.exports = {
-    getTechInvestmentImpact: () => techInvestmentStmt.all(),
+    getTechInvestmentImpact: () => {
+        try {
+            // fetch data from source
+            const results = techInvestmentStmt.all();
+            console.log('Data fetched from source');
+            return results;
+        } catch (error) {
+            console.error('Error in getTechInvestmentImpact:', error);
+            throw error;
+        }
+    },
     getProjectOutputs: () => projectOutputsStmt.all(),
     getSDGPerformanceAnalysis: () => sdgAnalysisStmt.all(),
     getStrategicGoalsAnalysis: () => getStrategicGoalsAnalysis(),
