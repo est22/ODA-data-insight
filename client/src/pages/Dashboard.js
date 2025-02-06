@@ -1,112 +1,50 @@
-import { useState, useEffect } from 'react';
-import SummaryCards from '../components/SummaryCards';
-import TimelineChart from '../components/charts/TimelineChart';
-import StrategicGoalsChart from '../components/charts/StrategicGoalsChart';
-import TopRecipientsTable from '../components/tables/TopRecipientsTable';
-import SDGContributionChart from '../components/charts/SDGContributionChart';
+import { Box, Container, Typography } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import StrategicOverview from '../components/StrategicAnalysis/StrategicOverview';
+import SectorComparison from '../components/StrategicAnalysis/SectorComparison';
+import LoadingState from '../components/Common/LoadingState';
+import ErrorState from '../components/Common/ErrorState';
 
 function Dashboard() {
-  const [techInvestment, setTechInvestment] = useState(null);
-  const [sdgPerformance, setSDGPerformance] = useState(null);
-  const [strategicGoals, setStrategicGoals] = useState(null);
-  const [timeline, setTimeline] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        const fetchWithErrorHandling = async (url) => {
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          console.log(`Data from ${url}:`, data); // 디버깅용
-          return data;
-        };
-
-        const [techData, sdgData, goalsData, timelineData] = await Promise.all([
-          fetchWithErrorHandling('http://localhost:8000/tech-investment-impact'),
-          fetchWithErrorHandling('http://localhost:8000/sdg-performance'),
-          fetchWithErrorHandling('http://localhost:8000/strategic-goals'),
-          fetchWithErrorHandling('http://localhost:8000/performance-timeline')
-        ]);
-
-        console.log('Tech Data:', techData); // debugging
-        setTechInvestment(techData);
-        setSDGPerformance(sdgData);
-        setStrategicGoals(goalsData);
-        setTimeline(timelineData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        // add error status
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="loading">
-        <h2>fetching data...</h2>
-      </div>
+    const { data, isLoading, error } = useQuery(
+        ['strategicGoals'],
+        async () => {
+            const response = await fetch('/strategic-goals');
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result;
+        },
+        { staleTime: 5 * 60 * 1000 } // 5 minutes cache
     );
-  }
 
-  if (error) {
+    if (isLoading) return <LoadingState />;
+    if (error) return <ErrorState error={error} />;
+
+    const { data: strategicData, metadata } = data;
+
     return (
-      <div className="error">
-        <h2>Error occurred</h2>
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Try again</button>
-      </div>
+        <Container maxWidth="xl">
+            <Box sx={{ py: 4 }}>
+                <Typography variant="h4" gutterBottom>
+                    KOICA Tech Innovation Analysis
+                </Typography>
+                
+                {/* Overview Cards */}
+                <Box sx={{ mb: 4 }}>
+                    <StrategicOverview 
+                        totalProjects={metadata.totalProjects}
+                        totalInvestment={metadata.totalInvestment}
+                        sectors={metadata.sectors}
+                    />
+                </Box>
+
+                {/* Sector Comparison */}
+                <Box sx={{ mb: 4 }}>
+                    <SectorComparison data={strategicData} />
+                </Box>
+            </Box>
+        </Container>
     );
-  }
-
-  if (isLoading || !techInvestment?.summary) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div className="dashboard">
-      <h1>KOICA Tech Innovation ODA Performance Dashboard</h1>
-      
-      {techInvestment?.summary && (
-        <SummaryCards data={techInvestment.summary} />
-      )}
-
-      <div className="main-charts">
-        {timeline && (
-          <TimelineChart 
-            data={timeline} 
-            title="Yearly Tech Innovation ODA Investment Trend"
-          />
-        )}
-        {strategicGoals && (
-          <StrategicGoalsChart 
-            data={strategicGoals}
-            title="Strategic Goals Project Status"
-          />
-        )}
-      </div>
-
-      <div className="detail-analysis">
-        {techInvestment?.summary?.top_recipients && (
-          <TopRecipientsTable data={techInvestment.summary.top_recipients} />
-        )}
-        {sdgPerformance && (
-          <SDGContributionChart data={sdgPerformance} />
-        )}
-      </div>
-    </div>
-  );
 }
 
 export default Dashboard; 
