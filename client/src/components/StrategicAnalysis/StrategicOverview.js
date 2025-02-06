@@ -8,7 +8,11 @@ import {
 // Simple card component for overview statistics
 function OverviewCard({ title, value, icon, subtitle, details }) {
     return (
-        <Paper sx={{ p: 3, height: '100%', bgcolor: 'background.paper' }}>
+        <Paper sx={{ 
+            p: 2, 
+            height: '120px', 
+            bgcolor: 'background.paper' 
+        }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Box sx={{ 
                     mr: 2, 

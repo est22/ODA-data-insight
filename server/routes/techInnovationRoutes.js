@@ -103,16 +103,21 @@ router.get('/country-details/:country', (req, res) => {
             item => item.recipient_name === req.params.country
         );
 
+        const yearlyData = Object.entries(countryDetails.reduce((acc, curr) => {
+            if (!acc[curr.year]) {
+                acc[curr.year] = 0;
+            }
+            acc[curr.year] += curr.total_investment;
+            return acc;
+        }, {})).map(([year, total_investment]) => ({
+            year: parseInt(year),
+            total_investment
+        })).sort((a, b) => a.year - b.year);
+
         res.json({
             projects: countryDetails.length,
             totalInvestment: countryDetails.reduce((sum, item) => sum + item.total_investment, 0),
-            yearlyData: countryDetails.reduce((acc, curr) => {
-                if (!acc[curr.year]) {
-                    acc[curr.year] = 0;
-                }
-                acc[curr.year] += curr.total_investment;
-                return acc;
-            }, {})
+            yearlyData
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
