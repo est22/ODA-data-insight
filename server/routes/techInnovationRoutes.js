@@ -60,23 +60,34 @@ router.get('/performance-timeline', (req, res) => {
 // Country investment data
 router.get('/country-investments', (req, res) => {
     try {
-        console.log('Fetching country investments data...');
         const results = getTechInvestmentImpact();
         
-        if (!results || !results.length) {
-            console.log('No results found');
-            return res.json({});
-        }
-
-        // Convert array to object with country names as keys
+        // construct detailed information for each country
         const countryData = results.reduce((acc, curr) => {
-            if (curr.recipient_name && curr.total_investment) {
-                acc[curr.recipient_name] = curr.total_investment;
+            if (!curr.recipient_name) return acc;
+            
+            if (!acc[curr.recipient_name]) {
+                acc[curr.recipient_name] = {
+                    amount: 0,
+                    projects: 0,
+                    sectors: new Set()
+                };
             }
+            
+            acc[curr.recipient_name].amount += curr.total_investment;
+            acc[curr.recipient_name].projects += 1;
+            if (curr.sector) {
+                acc[curr.recipient_name].sectors.add(curr.sector);
+            }
+            
             return acc;
         }, {});
 
-        console.log(`Processed data for ${Object.keys(countryData).length} countries`);
+        // convert Set to Array
+        Object.values(countryData).forEach(data => {
+            data.sectors = Array.from(data.sectors);
+        });
+
         res.json(countryData);
     } catch (error) {
         console.error('Error in /country-investments:', error);
