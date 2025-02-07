@@ -30,7 +30,9 @@ This project is a full-stack application designed to provide sophisticated analy
       - [Basic Education Metrics](#basic-education-metrics)
       - [Digital Education Metrics](#digital-education-metrics)
       - [Higher Education Metrics](#higher-education-metrics)
-    - [Integration and Synergy](#integration-and-synergy)
+    - [⚡️ Integration and Synergy](#️-integration-and-synergy)
+  - [Acknowledgments](#acknowledgments)
+  - [Final Thoughts](#final-thoughts)
 
 
 
@@ -220,7 +222,7 @@ Evaluates the long-term impact and sustainability of education projects after co
 
 ## 4. Analysis Methodology
 ### 1. Data Collection  
-Education data was collected from [World Bank](https://databank.worldbank.org/source/world-development-indicators) API, ensuring a globally recognized, standardized dataset. **KOICA’s SDG Performance Indicators dataset**(`server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`) was also utilized to capture project-specific (education) investment details.
+Education data was collected from [World Bank](https://databank.worldbank.org/source/education-statistics-%5e-all-indicators#) API, ensuring a globally recognized, standardized dataset. [KOICA’s SDG Performance Indicators](https://www.data.go.kr/data/15105461/fileData.do) dataset was also utilized to capture project-specific (education) investment details as in `server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`.
 
 ### 2. Data Cleaning and Integration  
 - Standardized country names and time periods across datasets
@@ -259,7 +261,7 @@ This tripartite framework aligns seamlessly with **global SDG standards** and **
 
 ### 📊 Secondary Dataset: World Bank Development Indicators 
 
-To complement KOICA’s **project-specific** data, we carefully curated a set of **World Bank indicators (2015–2023)** that correspond to each strategic objective. The selection ensures alignment with **global development frameworks**, capturing both **de facto outcomes** (real-world impact) and **de jure institutional frameworks** (policy-level readiness).  
+To complement KOICA’s **project-specific** data, I carefully curated a set of **World Bank indicators (2015–2023)** that correspond to each strategic objective. The selection ensures alignment with **global development frameworks**, capturing both **de facto outcomes** (real-world impact) and **de jure institutional frameworks** (policy-level readiness).  
 
 
 #### Basic Education Metrics
@@ -294,7 +296,7 @@ To complement KOICA’s **project-specific** data, we carefully curated a set of
 ```
 
 
-### Integration and Synergy
+### ⚡️ Integration and Synergy
 The integration of these datasets creates a unique analytical framework that bridges the gap between development inputs (KOICA's project investments) and outcomes (World Bank indicators). This combination allows for:
 
 1. Direct correlation analysis between investment and impact
@@ -305,3 +307,12 @@ The integration of these datasets creates a unique analytical framework that bri
 The careful selection of both 'De facto' and 'De jure' indicators ensures a balanced view of both actual outcomes and institutional capacity development, providing a comprehensive picture of educational progress in recipient countries.
 
 This thoughtfully constructed dataset enables sophisticated analysis of educational development initiatives, supporting evidence-based decision-making in international development cooperation.
+
+## Acknowledgments  
+This analysis was made possible through high-quality data provided by **KOICA**, **OECD**, and the **World Bank**. Their commitment to transparent and accessible data plays a crucial role in advancing global education development efforts.  
+
+I extend my appreciation to these organizations for their contributions to evidence-based policymaking and sustainable development.  
+
+
+## Final Thoughts
+ Hope this analysis contributes valuable insights to global education development efforts. Thank you for your interest!
