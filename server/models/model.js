@@ -1,54 +1,102 @@
 const fs = require('fs');
 const path = require('path');
-const csv = require('csv-parser');
 const Database = require('better-sqlite3');
 
-// Update DB path to server directory
-const dbPath = path.join(__dirname, '../oda.db');
+const dbPath = path.join(__dirname, '../data/ODA.db');
 
 function initializeDatabase() {
-    // Check if database already exists
-    const dbExists = fs.existsSync(dbPath);
-    
-    // Create database connection
-    const db = new Database(dbPath);
-    
-    // Only create tables and load data if database doesn't exist
-    if (!dbExists) {
-        console.log('Initializing new database...');
+    try {
+        const db = new Database(dbPath);
         
-        // Create tables
+        db.prepare('DROP TABLE IF EXISTS oda_education').run();
+        
+        // create education table
         db.prepare(`
-            CREATE TABLE IF NOT EXISTS oda_data (
-                project_number TEXT,
-                project_title TEXT,
-                recipient_name TEXT,
-                year INTEGER,
-                purpose_code TEXT,
-                sector TEXT,
-                usd_commitment REAL,
-                usd_disbursement REAL,
-                gender INTEGER,
-                sdg_focus TEXT
+            CREATE TABLE IF NOT EXISTS oda_education (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT NOT NULL,
+                project_name TEXT NOT NULL,
+                country TEXT NOT NULL,
+                year INTEGER NOT NULL,
+                purpose_code TEXT NOT NULL,
+                investment REAL,
+                disbursement REAL,
+                sdg_focus TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `).run();
 
-        db.prepare(`
-            CREATE TABLE IF NOT EXISTS sdg_indicators (
-                sector TEXT,
-                strategic_goal TEXT,
-                program TEXT,
-                performance_indicators TEXT,
-                output_indicators TEXT
-            )
-        `).run();
+        // read education data from CSV file
+        const csvPath = path.join(__dirname, '../data/oda_korea_dataset.csv');
+        const csvContent = fs.readFileSync(csvPath, 'utf-8');
+        const rows = csvContent.split('\n')
+            .slice(1)
+            .filter(line => line.trim()) 
+            .map(line => {
+                const fields = line.split(',').map(f => f.trim().replace(/"/g, ''));
+                const purposeCode = fields[4] || '';
+                
+                // filter education related purpose codes
+                if (!purposeCode.startsWith('11') && !['22040', '22081', '43081'].includes(purposeCode)) {
+                    return null;
+                }
+                
+                
+                if (fields[2] === 'Republic of Korea') {
+                    return null;
+                }
 
-        console.log('Database tables created');
-    } else {
-        console.log('Using existing database');
+                // set categories
+                let category;
+                if (purposeCode.startsWith('111') || purposeCode.startsWith('112')) {
+                    category = '학습성과를 위한 양질의 교육';
+                } else if (['22040', '22081', '43081'].includes(purposeCode)) {
+                    category = '미래역량개발을 위한 디지털교육';
+                } else if (purposeCode.startsWith('113') || purposeCode.startsWith('114')) {
+                    category = '인재양성을 위한 직업·고등교육';
+                } else {
+                    return null;
+                }
+
+                return {
+                    category,
+                    project_name: fields[1] || '',  // project name
+                    country: fields[2] || '',
+                    year: parseInt(fields[3]) || 0,
+                    purpose_code: purposeCode,
+                    investment: parseFloat(fields[6]) || 0,
+                    disbursement: parseFloat(fields[7]) || 0,
+                    sdg_focus: fields[9] || null
+                };
+            })
+            .filter(row => row !== null);
+
+        const insertStmt = db.prepare(`
+            INSERT INTO oda_education (
+                category, project_name, country,
+                year, purpose_code, investment, 
+                disbursement, sdg_focus
+            ) VALUES (
+                @category, @project_name, @country,
+                @year, @purpose_code, @investment, 
+                @disbursement, @sdg_focus
+            )
+        `);
+
+        const insertMany = db.transaction((rows) => {
+            for (const row of rows) {
+                insertStmt.run(row);
+            }
+        });
+
+        insertMany(rows);
+        console.log('Education data loaded successfully');
+
+        return db;
+    } catch (error) {
+        console.error('Database initialization failed:', error);
+        throw error;
     }
-
-    return db;
 }
 
 const db = initializeDatabase();
