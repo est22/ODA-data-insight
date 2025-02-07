@@ -4,6 +4,7 @@ const { db } = require('./models/model');  // initialize database
 const { initializeEducationTable } = require('./models/educationQueries');
 const educationRoutes = require('./routes/educationRoutes');
 const { fetchWorldBankData } = require('./models/worldBankQueries');
+const analysisRoutes = require('./routes/analysisRoutes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ fetchWorldBankData().catch(console.error);
 
 // Routes
 app.use('/', educationRoutes);
+app.use('/analysis', analysisRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
