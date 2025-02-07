@@ -3,6 +3,7 @@ const cors = require('cors');
 const { db } = require('./models/model');  // initialize database
 const { initializeEducationTable } = require('./models/educationQueries');
 const educationRoutes = require('./routes/educationRoutes');
+const { fetchWorldBankData } = require('./models/worldBankQueries');
 
 const app = express();
 
@@ -13,6 +14,9 @@ app.use(express.json());
 
 // Initialize tables in correct order
 initializeEducationTable(); 
+
+// Initialize World Bank data
+fetchWorldBankData().catch(console.error);
 
 // Routes
 app.use('/', educationRoutes);
