@@ -8,7 +8,8 @@ import {
     ListItem,
     ListItemText,
     Divider,
-    Grid
+    Grid,
+    Chip
 } from '@mui/material';
 import { 
     LineChart, 
@@ -25,16 +26,28 @@ import {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF1493'];
 
 const CountryDetails = ({ country, data }) => {
-
+    // year filter
+    const [selectedYear, setSelectedYear] = React.useState('all');
 
     // process sector data
     const sectorData = React.useMemo(() => {
-        if (!data || !data.sectors || !Array.isArray(data.sectors)) return [];
-        const sectorCounts = data.sectors.reduce((acc, sector) => {
-            acc[sector.trim()] = (acc[sector.trim()] || 0) + 1;
+        if (!data || !data.recentProjects || !Array.isArray(data.recentProjects)) return [];
+        
+        // projects by sector
+        const sectorCounts = data.recentProjects.reduce((acc, project) => {
+            const sector = project.sector.trim();
+            acc[sector] = (acc[sector] || 0) + 1;
             return acc;
         }, {});
-        return Object.entries(sectorCounts).map(([name, value]) => ({ name, value }));
+
+        // convert to chart data format
+        return Object.entries(sectorCounts).map(([name, value]) => ({ 
+            name, 
+            value,
+            amount: data.recentProjects
+                .filter(p => p.sector.trim() === name)
+                .reduce((sum, p) => sum + p.amount, 0)
+        }));
     }, [data]);
 
     // process project data
@@ -42,6 +55,14 @@ const CountryDetails = ({ country, data }) => {
         if (!data || !data.recentProjects) return [];
         return Array.isArray(data.recentProjects) ? data.recentProjects : [];
     }, [data]);
+
+    // project list filtering logic
+    const filteredProjects = React.useMemo(() => {
+        if (!projectsList.length) return [];
+        return selectedYear === 'all' 
+            ? projectsList 
+            : projectsList.filter(project => project.year === selectedYear);
+    }, [projectsList, selectedYear]);
 
     // if no data, render nothing
     if (!data) return null;
@@ -154,7 +175,9 @@ const CountryDetails = ({ country, data }) => {
                                                 }}
                                             />
                                             <Typography variant="body2">
-                                                {entry.name} ({entry.value} projects)
+                                                {entry.name}
+                                                <br />
+                                                ({entry.value} projects, ${(entry.amount/1000000).toFixed(2)}M)
                                             </Typography>
                                         </Box>
                                     ))}
@@ -171,23 +194,56 @@ const CountryDetails = ({ country, data }) => {
                 {/* recent projects list */}
                 <Grid item xs={12}>
                     <Paper elevation={0} variant="outlined" sx={{ p: 2 }}>
-                        <Typography 
-                            variant="h6" 
-                            gutterBottom
-                            sx={{
-                                fontFamily: "'Roboto Condensed', sans-serif",
-                                fontWeight: 700,
-                                letterSpacing: 0.5
-                            }}
-                        >
-                            Recent Projects
-                        </Typography>
-                        {projectsList.length > 0 ? (
+                        <Box sx={{ mb: 2 }}>
+                            <Typography 
+                                variant="h6" 
+                                gutterBottom 
+                                sx={{
+                                    fontFamily: "'Roboto Condensed', sans-serif",
+                                    fontWeight: 700,
+                                    letterSpacing: 0.5
+                                }}
+                            >
+                                Recent Projects
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                <Chip 
+                                    label="All Years"
+                                    onClick={() => setSelectedYear('all')}
+                                    color={selectedYear === 'all' ? 'primary' : 'default'}
+                                    sx={{ 
+                                        bgcolor: selectedYear === 'all' ? '#FF1493' : 'default',
+                                        color: selectedYear === 'all' ? 'white' : 'inherit',
+                                        '&:hover': {
+                                            bgcolor: selectedYear === 'all' ? '#FF1493' : 'default'
+                                        }
+                                    }}
+                                />
+                                {Array.from(new Set(projectsList.map(p => p.year)))
+                                    .sort((a, b) => b - a)  // 최신 연도순 정렬
+                                    .map(year => (
+                                        <Chip
+                                            key={year}
+                                            label={year}
+                                            onClick={() => setSelectedYear(year)}
+                                            sx={{ 
+                                                bgcolor: selectedYear === year ? '#FF1493' : 'default',
+                                                color: selectedYear === year ? 'white' : 'inherit',
+                                                '&:hover': {
+                                                    bgcolor: selectedYear === year ? '#FF1493' : 'default'
+                                                }
+                                            }}
+                                        />
+                                    ))
+                                }
+                            </Box>
+                        </Box>
+                        {filteredProjects.length > 0 ? (
                             <List sx={{ 
-                                maxHeight: '300px',  // 6 rows
-                                overflow: 'auto'     // scroll
+                                maxHeight: '300px',
+                                overflow: 'auto'
                             }}>
-                                {projectsList.map((project, index) => (
+                                {filteredProjects.map((project, index) => (
                                     <React.Fragment key={index}>
                                         <ListItem>
                                             <ListItemText
@@ -195,20 +251,20 @@ const CountryDetails = ({ country, data }) => {
                                                 secondary={
                                                     <React.Fragment>
                                                         <Typography component="span" variant="body2" color="text.primary">
-                                                            ${(project.amount/1000000).toFixed(2)}M
+                                                            ${project.amount.toLocaleString()}
                                                         </Typography>
                                                         {` — ${project.year} | ${project.sector}`}
                                                     </React.Fragment>
                                                 }
                                             />
                                         </ListItem>
-                                        {index < projectsList.length - 1 && <Divider />}
+                                        {index < filteredProjects.length - 1 && <Divider />}
                                     </React.Fragment>
                                 ))}
                             </List>
                         ) : (
                             <Typography variant="body2" color="text.secondary">
-                                No recent projects available
+                                No projects available for selected year
                             </Typography>
                         )}
                     </Paper>

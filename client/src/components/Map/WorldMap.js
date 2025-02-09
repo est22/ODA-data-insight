@@ -51,7 +51,7 @@ const WorldMap = ({
         zoom: 1.5
     });
 
-    // mapView가 변경되면 position 업데이트
+    // update position when mapView changes
     useEffect(() => {
         if (mapView) {
             setPosition(mapView);
@@ -78,12 +78,15 @@ const WorldMap = ({
 
     // determine color based on investment amount
     const getCountryColor = useCallback((amount) => {
-        if (!selectedInvestmentRange) return colorScale(amount);
+        // when All Ranges, use colorScale
+        if (selectedInvestmentRange === 'All Ranges' || !selectedInvestmentRange) {
+            return colorScale(amount);
+        }
         
         const range = investmentRanges[selectedInvestmentRange];
         if (!range) return "#F5F5F5";
         
-        // color when it's in the range
+        // when it's in the range
         return (amount >= range.min && amount < range.max) ? range.color : "#F5F5F5";
     }, [selectedInvestmentRange, investmentRanges, colorScale]);
 
@@ -127,23 +130,25 @@ const WorldMap = ({
             flexDirection: 'column',
             overflow: 'hidden'
         }}>
-            {/* World Map Title */}
-            <Typography 
-                variant="h6" 
-                gutterBottom
-                sx={{
-                    fontFamily: "'Roboto Condensed', sans-serif",
-                    fontWeight: 700,
-                    letterSpacing: 0.5,
-                    fontSize: '1.1rem',
-                    position: 'absolute',
-                    left: 16,
-                    top: 16,
-                    zIndex: 2
-                }}
-            >
-                World Map
-            </Typography>
+            {/* World Map Title - show only when map view */}
+            {!selectedCountry && (
+                <Typography 
+                    variant="h6" 
+                    gutterBottom
+                    sx={{
+                        fontFamily: "'Roboto Condensed', sans-serif",
+                        fontWeight: 700,
+                        letterSpacing: 0.5,
+                        fontSize: '1.1rem',
+                        position: 'absolute',
+                        left: 16,
+                        top: 16,
+                        zIndex: 2
+                    }}
+                >
+                    World Map
+                </Typography>
+            )}
 
             {/* map view control (+/-) */}
             {!selectedCountry && (

@@ -24,11 +24,9 @@ const INVESTMENT_RANGES = {
 };
 
 const Dashboard = () => {
-    const [selectedYear, setSelectedYear] = useState('2023');
-    const [selectedSector, setSelectedSector] = useState('All Sectors');
     const [selectedCountry, setSelectedCountry] = useState(null);
-    const [selectedRegion, setSelectedRegion] = useState('');
-    const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('');
+    const [selectedRegion, setSelectedRegion] = useState('All');
+    const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('All Ranges');
     const [mapView, setMapView] = useState(CONTINENT_VIEWS["All"]);
 
     // get summary data
@@ -64,12 +62,12 @@ const Dashboard = () => {
             
             // format data to match map component
             const formattedData = json.data.reduce((acc, project) => {
-                // convert to number format
-                const amount = parseFloat(project.total_investment);
-                if (amount > 0) {  // include only if investment exists
+                // use original data
+                const amount = project.total_investment; 
+                if (amount > 0) {
                     acc[project.country] = {
                         amount: amount,
-                        projects: parseInt(project.project_count),
+                        projects: project.project_count,
                         sectors: project.sectors.split(','),
                         trends: project.trends || [],
                         recentProjects: Array.isArray(project.projects) ? 
@@ -77,7 +75,7 @@ const Dashboard = () => {
                                 name: p.name,
                                 year: p.year,
                                 sector: p.sector,
-                                amount: parseFloat(p.amount)
+                                amount: p.amount 
                             })) : []
                     };
                 }
@@ -111,7 +109,7 @@ const Dashboard = () => {
         <Container maxWidth="xl">
             {/* Header Section */}
             <Box sx={{ 
-                mt: 2,  // reduce top margin
+                mt: 2,
                 mb: 3, 
                 textAlign: 'center' 
             }}>
@@ -120,94 +118,75 @@ const Dashboard = () => {
                     gutterBottom
                     sx={{
                         fontFamily: "'Roboto Condensed', sans-serif",
-                        fontWeight: 700, 
+                        fontWeight: 700,
                         letterSpacing: 1,
                         fontSize: '2.2rem'
                     }}
                 >
                     Education Development Analysis Dashboard
                 </Typography>
-                
-                {/* Summary Cards with Filters */}
+
+                {/* Summary Cards center aligned */}
                 <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: 2 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    mb: 3
                 }}>
                     <SummaryCards 
                         totalInvestment={summaryData?.total_investment || 0}
                         totalProjects={summaryData?.total_projects || 0}
                         focusSectors={summaryData?.focus_sectors || []}
                     />
-                    
-                    {/* New Filter Section */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        gap: 2,
-                        minWidth: '250px'
-                    }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography 
-                                sx={{ 
-                                    width: '100px',
-                                    fontFamily: "'Roboto Condensed', sans-serif",
-                                    fontWeight: 700
-                                }}
-                            >
-                                Continent:
-                            </Typography>
-                            <Select
-                                value={selectedRegion}
-                                onChange={(e) => {
-                                    setSelectedRegion(e.target.value);
-                                    // change map view by passing to WorldMap
-                                    setMapView(CONTINENT_VIEWS[e.target.value]);
-                                }}
-                                size="small"
-                                fullWidth
-                                displayEmpty
-                            >
-                                <MenuItem value="">All</MenuItem>
-                                <MenuItem value="Asia">Asia</MenuItem>
-                                <MenuItem value="Africa">Africa</MenuItem>
-                                <MenuItem value="Americas">Americas</MenuItem>
-                                <MenuItem value="Europe">Europe</MenuItem>
-                                <MenuItem value="Oceania">Oceania</MenuItem>
-                            </Select>
-                        </Box>
-                        
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography 
-                                sx={{ 
-                                    width: '100px',
-                                    fontFamily: "'Roboto Condensed', sans-serif",
-                                    fontWeight: 700
-                                }}
-                            >
-                                Investment:
-                            </Typography>
-                            <Select
-                                value={selectedInvestmentRange}
-                                onChange={(e) => setSelectedInvestmentRange(e.target.value)}
-                                size="small"
-                                fullWidth
-                                displayEmpty
-                            >
-                                <MenuItem value="">All Ranges</MenuItem>
-                                <MenuItem value="high">High (&gt;$100M)</MenuItem>
-                                <MenuItem value="medium">Medium ($10M-$100M)</MenuItem>
-                                <MenuItem value="low">Low (&lt;$10M)</MenuItem>
-                            </Select>
-                        </Box>
-                    </Box>
                 </Box>
             </Box>
 
             {/* Main Content */}
             <Box sx={{ display: 'flex', gap: 3, height: '600px' }}>
-                <Box sx={{ flex: 3, height: '100%' }}>
+                <Box sx={{ flex: 3, height: '100%', position: 'relative' }}>
+                    {/* Filters - World Map title next to it */}
+                    {!selectedCountry && (
+                        <Box sx={{ 
+                            position: 'absolute',
+                            left: 120,  // World Map text next to it
+                            top: 16,
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 2
+                        }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography sx={{ fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700 }}>
+                                    Continent:
+                                </Typography>
+                                <Select value={selectedRegion} onChange={(e) => {
+                                    setSelectedRegion(e.target.value);
+                                    setMapView(CONTINENT_VIEWS[e.target.value]);
+                                }} size="small" sx={{ width: 120 }}>
+                                    <MenuItem value="All">All</MenuItem>
+                                    <MenuItem value="Asia">Asia</MenuItem>
+                                    <MenuItem value="Africa">Africa</MenuItem>
+                                    <MenuItem value="Americas">Americas</MenuItem>
+                                    <MenuItem value="Europe">Europe</MenuItem>
+                                    <MenuItem value="Oceania">Oceania</MenuItem>
+                                </Select>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography sx={{ fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700 }}>
+                                    Investment:
+                                </Typography>
+                                <Select 
+                                    value={selectedInvestmentRange} 
+                                    onChange={(e) => setSelectedInvestmentRange(e.target.value)} 
+                                    size="small" 
+                                    sx={{ width: 120 }}
+                                >
+                                    <MenuItem value="All Ranges">All Ranges</MenuItem>
+                                    <MenuItem value="high">High (&gt;$100M)</MenuItem>
+                                    <MenuItem value="medium">Medium ($10M-$100M)</MenuItem>
+                                    <MenuItem value="low">Low (&lt;$10M)</MenuItem>
+                                </Select>
+                            </Box>
+                        </Box>
+                    )}
                     <WorldMap
                         data={mapData}
                         selectedCountry={selectedCountry}
