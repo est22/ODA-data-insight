@@ -30,65 +30,68 @@ function initializeEducationTable() {
         const rows = [];
         const csvPath = path.join(__dirname, '../data/oda_korea_dataset.csv');
         
-        fs.createReadStream(csvPath)
-            .pipe(csv())
-            .on('data', (row) => {
-                const purposeCode = row.purpose_code;
-                
-                // Skip if not education related
-                if (!purposeCode.startsWith('11') && 
-                    !['22040', '22081', '43081'].includes(purposeCode)) {
-                    return;
-                }
-                
-                // Skip if Republic of Korea
-                if (row.recipient_name === 'Republic of Korea') {
-                    return;
-                }
-
-                // Determine category
-                let category;
-                if (purposeCode.startsWith('111') || purposeCode.startsWith('112')) {
-                    category = '학습성과를 위한 양질의 교육';
-                } else if (['22040', '22081', '43081'].includes(purposeCode)) {
-                    category = '미래역량개발을 위한 디지털교육';
-                } else if (purposeCode.startsWith('113') || purposeCode.startsWith('114')) {
-                    category = '인재양성을 위한 직업·고등교육';
-                } else {
-                    return;
-                }
-
-                rows.push({
-                    category,
-                    country: row.recipient_name,
-                    year: parseInt(row.year),
-                    project_name: row.project_name,
-                    purpose_code: row.purpose_code,
-                    investment: parseFloat(row.usd_commitment),
-                    disbursement: parseFloat(row.usd_disbursement)
-                });
-            })
-            .on('end', () => {
-                const insertStmt = db.prepare(`
-                    INSERT INTO oda_education (
-                        category, country, year, project_name,
-                        purpose_code, investment, disbursement
-                    ) VALUES (
-                        @category, @country, @year, @project_name,
-                        @purpose_code, @investment, @disbursement
-                    )
-                `);
-
-                const insertMany = db.transaction((rows) => {
-                    for (const row of rows) {
-                        insertStmt.run(row);
+        return new Promise((resolve, reject) => {
+            fs.createReadStream(csvPath)
+                .pipe(csv())
+                .on('data', (row) => {
+                    const purposeCode = row.purpose_code;
+                    
+                    // Skip if not education related
+                    if (!purposeCode.startsWith('11') && 
+                        !['22040', '22081', '43081'].includes(purposeCode)) {
+                        return;
                     }
-                });
+                    
+                    // Skip if Republic of Korea
+                    if (row.recipient_name === 'Republic of Korea') {
+                        return;
+                    }
 
-                insertMany(rows);
-                console.log('Education data loaded successfully');
-            });
+                    // Determine category
+                    let category;
+                    if (purposeCode.startsWith('111') || purposeCode.startsWith('112')) {
+                        category = '학습성과를 위한 양질의 교육';
+                    } else if (['22040', '22081', '43081'].includes(purposeCode)) {
+                        category = '미래역량개발을 위한 디지털교육';
+                    } else if (purposeCode.startsWith('113') || purposeCode.startsWith('114')) {
+                        category = '인재양성을 위한 직업·고등교육';
+                    } else {
+                        return;
+                    }
 
+                    rows.push({
+                        category,
+                        country: row.recipient_name,
+                        year: parseInt(row.year),
+                        project_name: row.project_name,
+                        purpose_code: row.purpose_code,
+                        investment: parseFloat(row.usd_commitment),
+                        disbursement: parseFloat(row.usd_disbursement)
+                    });
+                })
+                .on('end', () => {
+                    const insertStmt = db.prepare(`
+                        INSERT INTO oda_education (
+                            category, country, year, project_name,
+                            purpose_code, investment, disbursement
+                        ) VALUES (
+                            @category, @country, @year, @project_name,
+                            @purpose_code, @investment, @disbursement
+                        )
+                    `);
+
+                    const insertMany = db.transaction((rows) => {
+                        for (const row of rows) {
+                            insertStmt.run(row);
+                        }
+                    });
+
+                    insertMany(rows);
+                    console.log('Education data loaded successfully');
+                    resolve();  // Promise 완료
+                })
+                .on('error', reject);  // 에러 처리
+        });
     } catch (error) {
         console.error('Failed to initialize education table:', error);
         throw error;
@@ -105,9 +108,6 @@ const getEducationSummary = () => {
             WHERE investment IS NOT NULL
         `).get();
 
-        // add debug log
-        // console.log('Raw investment data:', investmentResult);
-
         const projectsResult = db.prepare(`
             SELECT COUNT(*) as total_projects 
             FROM oda_education
@@ -121,17 +121,13 @@ const getEducationSummary = () => {
         `).all();
 
         const result = {
-            total_investment: parseFloat(investmentResult.total_investment) || 0,
+            total_investment: (parseFloat(investmentResult.total_investment) || 0) * 1000000,
             total_projects: Number(projectsResult.total_projects),
             focus_sectors: sectorsResult.map(row => row.sector)
         };
 
-        // add debug log
-        // console.log('Formatted summary data:', result);
-
         return result;
     } catch (error) {
-        console.error('Error in getEducationSummary:', error);
         throw error;
     }
 };
@@ -173,53 +169,34 @@ const getEducationProjects = () => {
             ORDER BY year DESC, investment DESC
         `).all();
 
-
-
-        // integrate data and add logs
+        // integrate data
         const formattedData = countryData.reduce((acc, country) => {
-
             acc[country.country] = {
-                amount: country.total_investment,
+                amount: parseFloat(country.total_investment) * 1000000,
                 projects: country.project_count,
                 sectors: country.sectors.split(','),
                 trends: trendData
                     .filter(trend => trend.country === country.country)
                     .map(trend => ({
                         year: trend.year,
-                        amount: trend.amount
+                        amount: parseFloat(trend.amount) * 1000000
                     })),
                 recentProjects: projectsData
                     .filter(project => project.country === country.country)
-                    // .slice(0, 5)  // latest 5 projects
                     .map(project => ({
                         name: project.project_name,
                         year: project.year,
                         sector: project.category,
-                        amount: project.amount
+                        amount: parseFloat(project.amount) * 1000000
                     }))
             };
             return acc;
         }, {});
         return formattedData;
     } catch (error) {
-        console.error('Error in getEducationProjects:', error);
         throw error;
     }
 };
-
-// add sample investment data for debugging
-const checkInvestmentData = () => {
-    const sampleData = db.prepare(`
-        SELECT investment, CAST(REPLACE(investment, ',', '') AS FLOAT) as converted
-        FROM oda_education
-        WHERE investment IS NOT NULL
-        LIMIT 5
-    `).all();
-
-};
-
-// call this when initializing
-checkInvestmentData();
 
 module.exports = {
     initializeEducationTable,

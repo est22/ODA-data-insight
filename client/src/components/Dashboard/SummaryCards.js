@@ -59,6 +59,17 @@ function OverviewCard({ title, value, icon, subtitle, color, tooltip }) {
     ) : content;
 }
 
+const formatInvestment = (amount) => {
+    if (!amount) return '$0';
+    
+    // amount is in billions
+    if (amount >= 1000000000) {
+        return `$${(amount/1000000000).toFixed(2)}B`;
+    }
+    // amount is in millions
+    return `$${(amount/1000000).toFixed(2)}M`;
+};
+
 const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
     const sectorsList = Array.isArray(focusSectors) ? 
         focusSectors : 
@@ -70,12 +81,12 @@ const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
             <Typography variant="subtitle2" gutterBottom>Total Investment:</Typography>
             <Typography variant="body2">
                 ${totalInvestment?.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })} USD
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-                (${(totalInvestment/1000000).toFixed(2)}B)
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                })} USD {' '}
+                <Typography component="span" color="white" variant="caption">
+                    ({formatInvestment(totalInvestment)})
+                </Typography>
             </Typography>
         </Box>
     );
@@ -94,11 +105,6 @@ const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
     );
 
     // number formatting
-    const formatInvestment = (amount) => {
-        if (!amount) return '$0';
-        return `$${(amount/1000).toFixed(2)}M`;  // display in millions
-    };
-
     const formatNumber = (num) => {
         if (!num) return '0';
         return num.toLocaleString();  // add thousands separator
@@ -116,10 +122,10 @@ const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
                     • Average Investment per Project: ${((totalInvestment || 0) / (totalProjects || 1)).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
-                    })} USD
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                    (${((totalInvestment/1000000) / (totalProjects || 1)).toFixed(2)}M per project)
+                    })} USD {' '}
+                    <Typography component="span" color="white" variant="caption">
+                        (${((totalInvestment/1000000) / (totalProjects || 1)).toFixed(2)}M per project)
+                    </Typography>
                 </Typography>
                 <Typography variant="body2">
                     • Sectors Covered: {sectorsList.length} areas

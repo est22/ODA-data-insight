@@ -6,10 +6,10 @@ const analysisController = require('../controllers/analysisController');
 // Get all education projects
 router.get('/projects', async (req, res) => {
     try {
-        const results = await getEducationProjects();
+        const data = await getEducationProjects();
         res.json({
             success: true,
-            data: results
+            data: data 
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -19,14 +19,10 @@ router.get('/projects', async (req, res) => {
 // Get education summary statistics
 router.get('/summary', async (req, res) => {
     try {
-        const results = await getEducationSummary();
+        const data = await getEducationSummary();
         res.json({
             success: true,
-            data: {
-                total_investment: results.total_investment || 0,
-                total_projects: results.total_projects || 0,
-                focus_sectors: results.focus_sectors || []
-            }
+            data: data 
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
