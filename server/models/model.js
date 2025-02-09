@@ -101,6 +101,44 @@ function initializeDatabase() {
 
 const db = initializeDatabase();
 
+const initializeEducationTable = async () => {
+    try {
+        // 테이블 생성
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS education_projects (
+                id SERIAL PRIMARY KEY,
+                project_name VARCHAR(255) NOT NULL,
+                country VARCHAR(100) NOT NULL,
+                sector VARCHAR(100),
+                investment_amount DECIMAL(15,2) NOT NULL,
+                start_date DATE,
+                end_date DATE,
+                status VARCHAR(50)
+            )
+        `);
+
+        // 기존 데이터 확인
+        const existingData = await db.query('SELECT COUNT(*) FROM education_projects');
+        
+        // 데이터가 없는 경우에만 샘플 데이터 삽입
+        if (existingData.rows[0].count === '0') {
+            await db.query(`
+                INSERT INTO education_projects 
+                (project_name, country, sector, investment_amount, start_date, end_date, status)
+                VALUES 
+                ('Digital Education Initiative', 'Korea', 'Technology', 5000000.00, '2023-01-01', '2024-12-31', 'Active'),
+                ('Rural School Development', 'Vietnam', 'Infrastructure', 3000000.00, '2023-03-15', '2024-06-30', 'Active'),
+                ('Teacher Training Program', 'Indonesia', 'Capacity Building', 2000000.00, '2023-02-01', '2023-12-31', 'Active'),
+                ('STEM Education Support', 'Thailand', 'Education', 4000000.00, '2023-04-01', '2024-03-31', 'Active'),
+                ('Educational Technology', 'Malaysia', 'Technology', 6000000.00, '2023-01-15', '2024-12-31', 'Active')
+            `);
+        }
+    } catch (error) {
+        console.error('Error initializing education table:', error);
+        throw error;
+    }
+};
+
 module.exports = {
     db
 };

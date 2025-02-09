@@ -95,27 +95,131 @@ function initializeEducationTable() {
     }
 }
 
-function getEducationProjects() {
-    return db.prepare(`
-        SELECT * FROM oda_education 
-        ORDER BY year DESC, investment DESC
-    `).all();
-}
+const getEducationSummary = () => {
+    try {
+        // calculate investment amount query
+        const investmentResult = db.prepare(`
+            SELECT 
+                ROUND(COALESCE(SUM(CAST(REPLACE(investment, ',', '') AS FLOAT)), 0), 2) as total_investment 
+            FROM oda_education
+            WHERE investment IS NOT NULL
+        `).get();
 
-function getEducationSummary() {
-    return db.prepare(`
-        SELECT 
-            category,
-            COUNT(*) as total_projects,
-            COUNT(DISTINCT country) as total_countries,
-            SUM(investment) as total_investment,
-            ROUND(AVG(CASE WHEN disbursement > 0 
-                THEN (disbursement / investment) * 100 
-                ELSE NULL END), 2) as execution_rate
+        // add debug log
+        // console.log('Raw investment data:', investmentResult);
+
+        const projectsResult = db.prepare(`
+            SELECT COUNT(*) as total_projects 
+            FROM oda_education
+        `).get();
+
+        const sectorsResult = db.prepare(`
+            SELECT DISTINCT category as sector
+            FROM oda_education 
+            WHERE category IS NOT NULL
+            ORDER BY category
+        `).all();
+
+        const result = {
+            total_investment: parseFloat(investmentResult.total_investment) || 0,
+            total_projects: Number(projectsResult.total_projects),
+            focus_sectors: sectorsResult.map(row => row.sector)
+        };
+
+        // add debug log
+        // console.log('Formatted summary data:', result);
+
+        return result;
+    } catch (error) {
+        console.error('Error in getEducationSummary:', error);
+        throw error;
+    }
+};
+
+const getEducationProjects = () => {
+    try {
+        // country basic info
+        const countryData = db.prepare(`
+            SELECT 
+                country,
+                COUNT(*) as project_count,
+                ROUND(COALESCE(SUM(CAST(REPLACE(investment, ',', '') AS FLOAT)), 0), 2) as total_investment,
+                GROUP_CONCAT(DISTINCT category) as sectors
+            FROM oda_education
+            GROUP BY country
+            ORDER BY total_investment DESC
+        `).all();
+
+        // country-year investment trend
+        const trendData = db.prepare(`
+            SELECT 
+                country,
+                year,
+                ROUND(COALESCE(SUM(CAST(REPLACE(investment, ',', '') AS FLOAT)), 0), 2) as amount
+            FROM oda_education
+            GROUP BY country, year
+            ORDER BY year ASC
+        `).all();
+
+        // country-latest projects
+        const projectsData = db.prepare(`
+            SELECT 
+                country,
+                project_name,
+                year,
+                category,
+                ROUND(CAST(REPLACE(investment, ',', '') AS FLOAT), 2) as amount
+            FROM oda_education
+            ORDER BY year DESC, investment DESC
+        `).all();
+
+
+
+        // integrate data and add logs
+        const formattedData = countryData.reduce((acc, country) => {
+
+            acc[country.country] = {
+                amount: country.total_investment,
+                projects: country.project_count,
+                sectors: country.sectors.split(','),
+                trends: trendData
+                    .filter(trend => trend.country === country.country)
+                    .map(trend => ({
+                        year: trend.year,
+                        amount: trend.amount
+                    })),
+                recentProjects: projectsData
+                    .filter(project => project.country === country.country)
+                    // .slice(0, 5)  // latest 5 projects
+                    .map(project => ({
+                        name: project.project_name,
+                        year: project.year,
+                        sector: project.category,
+                        amount: project.amount
+                    }))
+            };
+            return acc;
+        }, {});
+        return formattedData;
+    } catch (error) {
+        console.error('Error in getEducationProjects:', error);
+        throw error;
+    }
+};
+
+// add sample investment data for debugging
+const checkInvestmentData = () => {
+    const sampleData = db.prepare(`
+        SELECT investment, CAST(REPLACE(investment, ',', '') AS FLOAT) as converted
         FROM oda_education
-        GROUP BY category
+        WHERE investment IS NOT NULL
+        LIMIT 5
     `).all();
-}
+
+};
+
+// call this when initializing
+checkInvestmentData();
 
 module.exports = {
     initializeEducationTable,

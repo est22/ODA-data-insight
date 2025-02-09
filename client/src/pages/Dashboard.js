@@ -1,104 +1,175 @@
-import { Box, Container, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Container, Typography, IconButton, Select, MenuItem } from '@mui/material';
+import { FileDownload } from '@mui/icons-material';
+import SummaryCards from '../components/Dashboard/SummaryCards';
+import WorldMap from '../components/Map/WorldMap';
+import RankingPanel from '../components/Analysis/RankingPanel';
+import CountryDetails from '../components/Analysis/CountryDetails';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import StrategicOverview from '../components/StrategicAnalysis/StrategicOverview';
-import CountryMap from '../components/StrategicAnalysis/CountryMap';
-import CountryDetail from '../components/StrategicAnalysis/CountryDetail';
-import LoadingState from '../components/Common/LoadingState';
-import ErrorState from '../components/Common/ErrorState';
-import RankingPanel from '../components/StrategicAnalysis/RankingPanel';
 
-function Dashboard() {
-    // Add state for selected country
+const Dashboard = () => {
+    const [selectedYear, setSelectedYear] = useState('2023');
+    const [selectedSector, setSelectedSector] = useState('All Sectors');
     const [selectedCountry, setSelectedCountry] = useState(null);
 
-    // Strategic goals data
-    const { data: strategicData, error: strategicError } = useQuery(
-        ['strategicGoals'],
+    // get summary data
+    const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useQuery(
+        ['summary'],
         async () => {
-            const response = await fetch('/strategic-goals');
+            const response = await fetch('/education/summary');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.json();
+            const json = await response.json();
+            
+            return json.data;
         }
     );
 
-    // Country investment data
-    const { data: countryData, error: countryError } = useQuery(
-        ['countryInvestments'],
+    // get project data
+    const { data: projectsData, isLoading: projectsLoading, error: projectsError } = useQuery(
+        ['projects'],
         async () => {
-            const response = await fetch('/country-investments');
+            const response = await fetch('/education/projects');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.json();
+            const json = await response.json();
+            return json.data;
         }
     );
 
-    if (strategicError || countryError) return <ErrorState error={strategicError || countryError} />;
+    // get project data (for map data)
+    const { data: mapData, isLoading: mapLoading, error: mapError } = useQuery(
+        ['projects'],
+        async () => {
+            const response = await fetch('/education/projects');
+            if (!response.ok) throw new Error('Failed to fetch project data');
+            const json = await response.json();
+            
+            // format data to match map component
+            const formattedData = json.data.reduce((acc, project) => {
+                // convert to number format
+                const amount = parseFloat(project.total_investment);
+                if (amount > 0) {  // include only if investment exists
+                    acc[project.country] = {
+                        amount: amount,
+                        projects: parseInt(project.project_count),
+                        sectors: project.sectors.split(','),
+                        trends: project.trends || [],
+                        recentProjects: Array.isArray(project.projects) ? 
+                            project.projects.map(p => ({
+                                name: p.name,
+                                year: p.year,
+                                sector: p.sector,
+                                amount: parseFloat(p.amount)
+                            })) : []
+                    };
+                }
+                return acc;
+            }, {});
+            return formattedData;
+        }
+    );
 
-    // Handle country selection from either map or ranking list
-    const handleCountrySelect = (country) => {
-        setSelectedCountry(country);
-    };
+    // error handling
+    if (summaryError || projectsError || mapError) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Typography color="error">
+                    Error loading data: {summaryError?.message || projectsError?.message || mapError?.message}
+                </Typography>
+            </Box>
+        );
+    }
+
+    // loading handling
+    if (summaryLoading || projectsLoading || mapLoading) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Typography>Loading...</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Container maxWidth="xl">
-            <Box sx={{ py: 4 }}>
-                {/* Header row with title and stats */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 4,
-                    mb: 3
-                }}>
-                    {/* Title */}
-                    <Typography variant="h4" sx={{ flex: 1 }}>
-                        Tech Innovation SDG Analysis
-                    </Typography>
+            {/* Header Section */}
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                mb: 3 
+            }}>
+                <Typography variant="h4">
+                    Education Development Analysis Dashboard
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        size="small"
+                    >
+                        <MenuItem value="2023">2023</MenuItem>
+                        <MenuItem value="2022">2022</MenuItem>
+                        <MenuItem value="2021">2021</MenuItem>
+                    </Select>
+                    <IconButton>
+                        <FileDownload />
+                    </IconButton>
+                </Box>
+            </Box>
 
-                    {/* Stats banner */}
-                    <Box sx={{ display: 'flex', gap: 2, flex: 2 }}>
-                        {strategicData && (
-                            <StrategicOverview 
-                                totalProjects={strategicData.metadata.totalProjects}
-                                totalInvestment={strategicData.metadata.totalInvestment}
-                                sectors={strategicData.metadata.sectors}
-                            />
-                        )}
+            {/* Summary Cards */}
+            <SummaryCards 
+                totalInvestment={summaryData?.total_investment || 0}
+                totalProjects={summaryData?.total_projects || 0}
+                focusSectors={summaryData?.focus_sectors || []}
+            />
+
+            {/* Main Content */}
+            <Box sx={{ position: 'relative', mt: 3 }}>
+                {/* Filters */}
+                <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
+                    <Select
+                        value={selectedSector}
+                        onChange={(e) => setSelectedSector(e.target.value)}
+                        size="small"
+                    >
+                        <MenuItem value="All Sectors">All Sectors</MenuItem>
+                        {summaryData?.focus_sectors.map(sector => (
+                            <MenuItem key={sector} value={sector}>{sector}</MenuItem>
+                        ))}
+                    </Select>
+                </Box>
+
+                {/* Map and Rankings */}
+                <Box sx={{ display: 'flex', gap: 3 }}>
+                    <Box sx={{ flex: 3 }}>
+                        <WorldMap
+                            data={mapData}
+                            selectedCountry={selectedCountry}
+                            onCountrySelect={setSelectedCountry}
+                            year={selectedYear}
+                            sector={selectedSector}
+                        />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                        <RankingPanel
+                            data={mapData}
+                            onCountrySelect={setSelectedCountry}
+                            selectedCountry={selectedCountry}
+                        />
                     </Box>
                 </Box>
-                
-                {/* Main content */}
-                {strategicData ? (
-                    <Box sx={{ 
-                        display: 'flex', 
-                        gap: 3,
-                        height: 'calc(100vh - 180px)'
-                    }}>
-                        <Box sx={{ flex: 3 }}>
-                            {selectedCountry ? (
-                                <CountryDetail 
-                                    country={selectedCountry}
-                                    onClose={() => setSelectedCountry(null)}
-                                />
-                            ) : (
-                                <CountryMap 
-                                    data={countryData} 
-                                    onCountrySelect={handleCountrySelect}
-                                />
-                            )}
-                        </Box>
 
-                        <Box sx={{ flex: 1 }}>
-                            <RankingPanel 
-                                data={countryData}
-                                onCountrySelect={handleCountrySelect}
-                                selectedCountry={selectedCountry}
-                            />
-                        </Box>
-                    </Box>
-                ) : <LoadingState />}
+                {/* Country Details Modal */}
+                {selectedCountry && (
+                    <CountryDetails
+                        country={selectedCountry}
+                        data={mapData?.[selectedCountry]}
+                        onClose={() => setSelectedCountry(null)}
+                    />
+                )}
             </Box>
         </Container>
     );
-}
+};
 
 export default Dashboard; 

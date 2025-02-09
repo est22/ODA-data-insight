@@ -12,6 +12,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Initialize tables in correct order
 initializeEducationTable(); 
@@ -20,8 +21,8 @@ initializeEducationTable();
 fetchWorldBankData().catch(console.error);
 
 // Routes
-app.use('/', educationRoutes);
-app.use('/analysis', analysisRoutes);
+app.use('/education', educationRoutes); 
+app.use('/analysis', analysisRoutes);   
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
