@@ -6,25 +6,15 @@ async function getEfficiencyAnalysis(req, res) {
     try {
         const { country } = req.query;
         const data = await analysisService.getEfficiencyAnalysis(country);
+        
+        // return actual analysis results
         res.json({
             success: true,
-            message: 'Analysis of investment efficiency in education projects',
-            data: data,
-            metadata: {
-                description: 'Investment efficiency analysis in education projects',
-                metrics: {
-                    avg_improvement: 'Average improvement rate of all indicators (%)',
-                    investment_per_improvement: 'Investment required per 1% improvement (USD)',
-                    efficiency_score: 'Investment efficiency score'
-                }
-            }
+            data: data  
         });
     } catch (error) {
         console.error('Controller error:', error);
-        res.status(500).json({ 
-            error: 'Analysis failed',
-            details: error.message 
-        });
+        res.status(500).json({ error: 'Analysis failed' });
     }
 }
 

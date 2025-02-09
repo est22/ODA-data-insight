@@ -47,7 +47,7 @@ const IndicatorChart = ({ metrics }) => {
         const words = text.split(' ');
         const midpoint = Math.ceil(words.length / 2);
         
-        if (words.length <= 2) return [text]; // 짧은 텍스트는 한 줄로
+        if (words.length <= 2) return [text]; // short text is one line
         
         return [
             words.slice(0, midpoint).join(' '),
@@ -193,7 +193,11 @@ const CountryDetails = ({ country, data }) => {
     // if no data, render nothing
     if (!data) return null;
 
-    // 인사이트 생성 함수
+    // excluded countries list
+    const excludedCountries = ['Other regions or multiple countries (unassigned)'];
+    const isExcludedCountry = excludedCountries.includes(country);
+
+    // insight generation function
     const generateInsight = (category, metrics) => {
         const mainMetric = metrics[0];
         const avgValue = metrics.reduce((sum, m) => sum + m.value, 0) / metrics.length;
@@ -214,6 +218,161 @@ const CountryDetails = ({ country, data }) => {
             default:
                 return '';
         }
+    };
+
+    // ROI Analysis component
+    const ROIAnalysis = ({ category, metrics, country }) => {
+        // API call
+        const { data: efficiencyData, isLoading: efficiencyLoading } = useQuery(
+            ['efficiency', country], 
+            async () => {
+                const response = await fetch(`/analysis/efficiency?country=${country}`);
+                if (!response.ok) throw new Error('Failed to fetch efficiency data');
+                return response.json();
+            }
+        );
+
+        const { data: synergyData, isLoading: synergyLoading } = useQuery(
+            ['synergy', country], 
+            async () => {
+                const response = await fetch(`/analysis/synergy?country=${country}`);
+                if (!response.ok) throw new Error('Failed to fetch synergy data');
+                return response.json();
+            }
+        );
+
+        const { data: sustainabilityData, isLoading: sustainabilityLoading } = useQuery(
+            ['sustainability', country], 
+            async () => {
+                const response = await fetch(`/analysis/sustainability?country=${country}`);
+                if (!response.ok) throw new Error('Failed to fetch sustainability data');
+                return response.json();
+            }
+        );
+
+        // loading or error
+        if (efficiencyLoading || synergyLoading || sustainabilityLoading) {
+            return <CircularProgress size={20} />;
+        }
+
+        // ROI calculation function
+        const calculateROI = () => {
+            if (!efficiencyData?.data || !synergyData?.data || !sustainabilityData?.data) {
+                return null;
+            }
+
+            // extract scores for each category
+            const efficiency = efficiencyData.data[category]?.efficiency_score ?? 0;
+            const synergy = synergyData.data[category]?.synergy_score ?? 0;
+            const sustainability = sustainabilityData.data[category]?.sustainability_score ?? 0;
+
+            // World Bank indicator validation
+            if (!metrics?.length || metrics.some(m => m.value === undefined)) {
+                return null;
+            }
+
+            // average improvement rate calculation
+            const wbImprovement = metrics.reduce((sum, m) => sum + m.value, 0) / metrics.length;
+
+            return {
+                efficiency_score: efficiency,
+                synergy_score: synergy,
+                sustainability_score: sustainability,
+                overall_roi: (efficiency * 0.4 + synergy * 0.3 + sustainability * 0.3) * (wbImprovement / 100)
+            };
+        };
+
+        const roi = calculateROI();
+        if (!roi) return null;
+
+        return (
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(255, 20, 147, 0.05)', borderRadius: 1 }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ color: '#FF1493' }}>
+                    ROI Analysis
+                </Typography>
+                <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                        <Typography variant="caption" display="block">Efficiency</Typography>
+                        <Typography variant="h6" color="primary">
+                            {roi.efficiency_score.toFixed(1)}%
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <Typography variant="caption" display="block">Synergy</Typography>
+                        <Typography variant="h6" color="primary">
+                            {roi.synergy_score.toFixed(1)}%
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <Typography variant="caption" display="block">Sustainability</Typography>
+                        <Typography variant="h6" color="primary">
+                            {roi.sustainability_score.toFixed(1)}%
+                        </Typography>
+                    </Grid>
+                </Grid>
+
+                {/* Overall ROI bar chart */}
+                <Box sx={{ mt: 3 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                        Overall ROI: {roi.overall_roi.toFixed(1)}%
+                    </Typography>
+                    <Box sx={{ 
+                        width: '100%', 
+                        height: '24px', 
+                        bgcolor: 'rgba(255, 20, 147, 0.1)',
+                        borderRadius: 1,
+                        overflow: 'hidden'
+                    }}>
+                        <Box 
+                            sx={{ 
+                                width: `${Math.min(100, roi.overall_roi)}%`,
+                                height: '100%',
+                                bgcolor: '#FF1493',
+                                transition: 'width 1s ease-in-out'
+                            }} 
+                        />
+                    </Box>
+                    <Typography 
+                        variant="caption" 
+                        color="text.secondary" 
+                        sx={{ mt: 1, display: 'block' }}
+                    >
+                        {roi.overall_roi > 75 ? 'Exceptional' : roi.overall_roi > 50 ? 'Good' : 'Moderate'} ROI
+                    </Typography>
+                </Box>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    {generateROIInsight(roi, category)}
+                </Typography>
+            </Box>
+        );
+    };
+
+    // ROI insight generation function
+    const generateROIInsight = (roi, category) => {
+        const { efficiency_score, synergy_score, sustainability_score, overall_roi } = roi;
+        
+        let insight = '';
+        if (overall_roi > 75) {
+            insight = `Exceptional ROI in ${category} with strong performance across all metrics.`;
+        } else if (overall_roi > 50) {
+            insight = `Good ROI in ${category} with balanced performance.`;
+        } else {
+            insight = `Moderate ROI in ${category} with potential for improvement.`;
+        }
+
+        // identify strongest/weakest areas
+        const scores = [
+            { name: 'Efficiency', value: efficiency_score },
+            { name: 'Synergy', value: synergy_score },
+            { name: 'Sustainability', value: sustainability_score }
+        ];
+        const strongest = scores.reduce((a, b) => a.value > b.value ? a : b);
+        const weakest = scores.reduce((a, b) => a.value < b.value ? a : b);
+
+        insight += ` ${strongest.name} shows the strongest performance at ${strongest.value.toFixed(1)}%, while ${weakest.name} at ${weakest.value.toFixed(1)}% indicates room for enhancement.`;
+
+        return insight;
     };
 
     return (
@@ -439,16 +598,20 @@ const CountryDetails = ({ country, data }) => {
                 </Grid>
             </Grid>
 
-            {/* World Bank analysis results */}
+            {/* World Bank analysis results - exception handling added */}
             <Box sx={{ mt: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ mb: 3, fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700 }}>
                     Education Development Analysis
                 </Typography>
-                {analysisLoading ? (
+                {isExcludedCountry ? (
+                    <Alert severity="info">
+                        Analysis is not available for unassigned or multiple regions.
+                    </Alert>
+                ) : analysisLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                         <CircularProgress />
                     </Box>
-                ) : analysisData ? (
+                ) : analysisData && Object.keys(analysisData).length > 0 ? (
                     <Grid container spacing={3}>
                         {Object.entries(analysisData).map(([category, metrics]) => (
                             <Grid item xs={12} md={4} key={category}>
@@ -459,7 +622,7 @@ const CountryDetails = ({ country, data }) => {
                                         sx={{ 
                                             color: '#FF1493', 
                                             mb: 2,
-                                            fontSize: '1.1rem',  // 폰트 크기 축소
+                                            fontSize: '1.1rem', 
                                             fontFamily: "'Roboto Condensed', sans-serif",
                                             fontWeight: 700,
                                             letterSpacing: 0.5
@@ -511,13 +674,16 @@ const CountryDetails = ({ country, data }) => {
                                             {generateInsight(category, metrics)}
                                         </Typography>
                                     </Box>
+
+                                    {/* ROI Analysis */}
+                                    <ROIAnalysis category={category} metrics={metrics} country={country} />
                                 </Paper>
                             </Grid>
                         ))}
                     </Grid>
                 ) : (
                     <Alert severity="info">
-                        Error occurred while analyzing the data. Please try again later.
+                        World Bank data is not available for this country. Analysis cannot be performed.
                     </Alert>
                 )}
             </Box>

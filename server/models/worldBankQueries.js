@@ -181,6 +181,39 @@ function getWorldBankData() {
     `).all();
 }
 
+async function getWorldBankData(country) {
+    const countryCode = getCountryIsoCode(country);
+    const results = {};
+    
+    for (const [category, indicators] of Object.entries(INDICATORS)) {
+        const metrics = await Promise.all(indicators.map(async (indicator) => {
+            // fetch data from 2015 to 2023
+            const data = await fetchIndicatorData(countryCode, indicator, '2015:2023');
+            return {
+                indicator,
+                values: data.reduce((acc, d) => {
+                    acc[d.date] = d.value;
+                    return acc;
+                }, {})
+            };
+        }));
+        results[category] = metrics;
+    }
+    return results;
+}
+
+async function fetchIndicatorData(countryCode, indicator, dateRange) {
+    const url = `http://api.worldbank.org/v2/country/${countryCode}/indicator/${indicator}?format=json&date=${dateRange}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (!data || !data[1]) return [];
+    return data[1].map(item => ({
+        date: item.date,
+        value: item.value !== null ? parseFloat(item.value) : null
+    }));
+}
+
 module.exports = {
     fetchWorldBankData,
     getWorldBankData,

@@ -32,6 +32,11 @@ This project is a full-stack application designed to provide sophisticated analy
       - [Digital Education Metrics](#digital-education-metrics)
       - [Higher Education Metrics](#higher-education-metrics)
     - [⚡️ Integration and Synergy](#️-integration-and-synergy)
+  - [6. ROI Calculation Methodology](#6-roi-calculation-methodology)
+      - [Overall ROI Formula](#overall-roi-formula)
+      - [1. Efficiency Score (70% of ROI)](#1-efficiency-score-70-of-roi)
+      - [2. Synergy Score (20% of ROI)](#2-synergy-score-20-of-roi)
+      - [3. Sustainability Score (10% of ROI)](#3-sustainability-score-10-of-roi)
   - [Acknowledgments](#acknowledgments)
   - [Final Thoughts](#final-thoughts)
 
@@ -223,7 +228,7 @@ Evaluates the long-term impact and sustainability of education projects after co
 
 ## 4. Analysis Methodology
 ### 1. Data Collection  
-Education data was collected from [World Bank](https://databank.worldbank.org/source/education-statistics-%5e-all-indicators#) API, ensuring a globally recognized, standardized dataset. [KOICA’s SDG Performance Indicators](https://www.data.go.kr/data/15105461/fileData.do) dataset was also utilized to capture project-specific (education) investment details as in `server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`.
+Education data was collected from [World Bank](https://databank.worldbank.org/source/education-statistics-%5e-all-indicators#) API, ensuring a globally recognized, standardized dataset. [KOICA's SDG Performance Indicators](https://www.data.go.kr/data/15105461/fileData.do) dataset was also utilized to capture project-specific (education) investment details as in `server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`.
 
 
 ### Education Sectors
@@ -246,24 +251,47 @@ Note: The analysis interface maintains Korean sector names to align with KOICA's
 
 ### 2. Data Cleaning and Integration  
 - Standardized country names and time periods across datasets
-- Aligned KOICA’s education initiatives with corresponding World Bank indicators
+- Aligned KOICA's education initiatives with corresponding World Bank indicators
 - Merged investment and outcome datasets to facilitate comparative and correlation analyses
 
 
 ### A. Investment Efficiency Analysis  
-- Calculated year-over-year improvement rates for each education indicator 
-- Measured investment effectiveness through improvement-to-cost ratios
-- Identified the most cost-effective interventions across different education categories  
+- Year-over-Year Improvement Rate (70%)
+  - Calculates annual change in World Bank indicators
+  - Normalizes improvements across different metrics
+  - Weights critical indicators based on SDG alignment
+
+- Investment Effectiveness (30%)
+  - Projects per year / Average investment per year
+  - Normalized to 100-point scale for comparability
+  - Considers both quantity and financial efficiency
 
 ### B. Synergy Analysis  
-- Evaluated cross-category investment distributions  
-- Analyzed correlations between different educational outcomes  
-- Assessed the impact of **balanced vs. focused** investment strategies  
+- Investment Distribution Analysis
+  - Measures balance across education sectors
+  - Optimal distribution: 33.3% per sector
+  - Variance from optimal as performance metric
+
+- Strategic Recommendations
+  - Focused (>50% gap): High concentration
+  - Balanced (<20% gap): Even distribution
+  - Moderate (20-50% gap): Selective focus
 
 ### C. Sustainability Analysis  
-- Tracked post-project educational outcome sustainability  
-- Measured the long-term effectiveness of educational interventions  
-- Evaluated self-sustaining development potential in recipient countries 
+- Environmental Sustainability (30%)
+  - Trend analysis of improvement rates
+  - Long-term indicator stability
+  - Post-project outcome persistence
+
+- Social Sustainability (40%)
+  - Variance analysis of indicators
+  - Institutional capacity measures
+  - Community engagement metrics
+
+- Economic Sustainability (30%)
+  - Combined score of trends and stability
+  - Self-sustaining development potential
+  - Resource utilization efficiency
 
 
 ## 5. Dataset Choice Justification  
@@ -282,7 +310,7 @@ This tripartite framework aligns seamlessly with **global SDG standards** and **
 
 ### 📊 Secondary Dataset: World Bank Development Indicators 
 
-To complement KOICA’s **project-specific** data, I carefully curated a set of **World Bank indicators (2015–2023)** that correspond to each strategic objective. The selection ensures alignment with **global development frameworks**, capturing both **de facto outcomes** (real-world impact) and **de jure institutional frameworks** (policy-level readiness).  
+To complement KOICA's **project-specific** data, I carefully curated a set of **World Bank indicators (2015–2023)** that correspond to each strategic objective. The selection ensures alignment with **global development frameworks**, capturing both **de facto outcomes** (real-world impact) and **de jure institutional frameworks** (policy-level readiness).  
 
 
 #### Basic Education Metrics
@@ -329,6 +357,44 @@ The careful selection of both 'De facto' and 'De jure' indicators ensures a bala
 
 This thoughtfully constructed dataset enables sophisticated analysis of educational development initiatives, supporting evidence-based decision-making in international development cooperation.
 
+
+## 6. ROI Calculation Methodology
+
+#### Overall ROI Formula
+```
+Overall ROI = (Efficiency * 0.7) + (Synergy * 0.2) + (Sustainability * 0.1)
+```
+
+For example, in Sri Lanka's digital education:
+- Efficiency: 30.0% (Weight: 0.7) = 21.0%
+- Synergy: 100% (Weight: 0.2) = 20.0%
+- Sustainability: 223% (Weight: 0.1) = 22.3%
+- Overall ROI = 63.3%
+
+#### 1. Efficiency Score (70% of ROI)
+- **Year-over-Year Improvement**
+  - Calculates improvement in World Bank indicators from 2015-2023
+  - Example: Internet usage increase from 12.1% to 35.2% = 191% improvement
+  - All improvements are normalized to 0-100 scale
+
+- **Investment Effectiveness**
+  - Formula: (Projects per Year / Avg Investment per Year) × Scaling Factor
+  - Normalized to prevent oversized scores
+  - Example: 3 projects over 2 years with $1M investment = 30% effectiveness
+
+#### 2. Synergy Score (20% of ROI)
+- **Balance Score**
+  - Perfect balance (33.3% per sector) = 100%
+  - Deviation reduces score proportionally
+  - Example: 40%-30%-30% distribution = 90% balance score
+
+#### 3. Sustainability Score (10% of ROI)
+- **Long-term Impact**
+  - Post-project indicator stability
+  - Institutional capacity building
+  - Local ownership metrics
+
+
 ## Acknowledgments  
 This analysis was made possible through high-quality data provided by **KOICA**, **OECD**, and the **World Bank**. Their commitment to transparent and accessible data plays a crucial role in advancing global education development efforts.  
 
@@ -337,3 +403,25 @@ I extend my appreciation to these organizations for their contributions to evide
 
 ## Final Thoughts
  Hope this analysis contributes valuable insights to global education development efforts. Thank you for your interest!
+
+#### ROI Analysis Case Study: Sri Lanka
+
+1. **Digital Education (ROI: 63.3%)**
+   - High efficiency (30%) due to significant improvements in digital indicators
+   - Perfect synergy score (100%) from balanced investment
+   - Exceptional sustainability (223%) from strong digital infrastructure
+
+2. **Basic Education (ROI: 10.1%)**
+   - Low efficiency (12%) due to high baseline metrics
+   - Limited synergy (5%) from reduced investment focus
+   - Moderate sustainability (7%) focusing on maintenance
+
+3. **Higher Education (ROI: 1.3%)**
+   - Minimal efficiency (1%) showing limited progress
+   - Poor synergy (2%) lacking sector integration
+   - Low sustainability (2%) without institutional framework
+
+This case demonstrates how:
+- Digital education investments show highest returns in developing contexts
+- Basic education ROI can be lower when baseline metrics are already high
+- Higher education requires stronger institutional frameworks for success
