@@ -114,7 +114,7 @@ async function fetchWorldBankData() {
                     indicator: chalk.gray(`Loading: ${indicator}`)
                 });
 
-                // 연도 범위를 더 넓게 설정
+                
                 const url = `http://api.worldbank.org/v2/country/${countryList}/indicator/${indicator}?format=json&per_page=1000&date=2010:2023`;
                 
                 try {
@@ -138,7 +138,7 @@ async function fetchWorldBankData() {
 
                     const insertMany = db.transaction((rows) => {
                         for (const row of rows) {
-                            if (row.value !== null) {  // null 값 제외
+                            if (row.value !== null) { 
                                 insertStmt.run(row);
                             }
                         }
@@ -181,9 +181,8 @@ function getWorldBankData() {
     `).all();
 }
 
-
-
 module.exports = {
     fetchWorldBankData,
-    getWorldBankData
+    getWorldBankData,
+    INDICATORS
 }; 

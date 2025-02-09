@@ -14,4 +14,8 @@ router.get('/synergy', controller.getSynergyAnalysis);
 // GET /analysis/sustainability
 router.get('/sustainability', controller.getSustainabilityAnalysis);
 
+// 4. Real-time Analysis
+// GET /analysis/realtime/:country
+router.get('/realtime/:country', controller.getRealTimeAnalysis);
+
 module.exports = router; 

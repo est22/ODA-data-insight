@@ -22,7 +22,7 @@ fetchWorldBankData().catch(console.error);
 
 // Routes
 app.use('/education', educationRoutes); 
-app.use('/analysis', analysisRoutes);   
+app.use('/analysis', analysisRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

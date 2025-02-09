@@ -1,11 +1,8 @@
-import React, { useMemo } from 'react';
-import { Box, Paper, Typography, IconButton,List,ListItem,ListItemText,Divider,Grid,Chip,Stack } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Paper, Typography, List,ListItem,ListItemText,Divider,Grid,Chip, Button, CircularProgress, Alert } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import EfficiencyCard from './EfficiencyCard';
-import SynergyCard from './SynergyCard';
-import SustainabilityCard from './SustainabilityCard';
 import { useQuery } from '@tanstack/react-query';
-import { Speed, Hub, AutoGraph } from '@mui/icons-material';
+import { Analytics } from '@mui/icons-material';
 
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF1493'];
@@ -38,9 +35,8 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const CountryDetails = ({ country, data }) => {
-    // year filter
-    const [selectedYear, setSelectedYear] = React.useState('all');
-
+    const [selectedYear, setSelectedYear] = useState('all');
+    
     // process sector data
     const sectorData = React.useMemo(() => {
         if (!data || !data.recentProjects || !Array.isArray(data.recentProjects)) return [];
@@ -76,45 +72,22 @@ const CountryDetails = ({ country, data }) => {
             : projectsList.filter(project => project.year === selectedYear);
     }, [projectsList, selectedYear]);
 
-    // strategic analysis
-    const { data: analysisData, error } = useQuery(
-        ['analysis', country],
+    // load realtime analysis data
+    const { data: analysisData, isLoading: analysisLoading } = useQuery(
+        ['realtime-analysis', country], 
         async () => {
-            try {
-                const [efficiencyRes, synergyRes, sustainabilityRes] = await Promise.all([
-                    fetch(`/analysis/efficiency?country=${country}`).then(r => {
-                        if (!r.ok) throw new Error('Efficiency fetch failed');
-                        return r.json();
-                    }),
-                    fetch(`/analysis/synergy?country=${country}`).then(r => {
-                        if (!r.ok) throw new Error('Synergy fetch failed');
-                        return r.json();
-                    }),
-                    fetch(`/analysis/sustainability?country=${country}`).then(r => {
-                        if (!r.ok) throw new Error('Sustainability fetch failed');
-                        return r.json();
-                    })
-                ]);
-
-                return {
-                    efficiency: efficiencyRes.data,
-                    synergy: synergyRes.data,
-                    sustainability: sustainabilityRes.data
-                };
-            } catch (error) {
-                console.error('Analysis data fetch error:', error);
-                return {
-                    efficiency: null,
-                    synergy: null,
-                    sustainability: null
-                };
+            const response = await fetch(`/analysis/realtime/${country}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Analysis request failed');
             }
+            return response.json();
         },
-        {
-            enabled: !!country,
-            staleTime: 5 * 60 * 1000,
-            cacheTime: 30 * 60 * 1000,
-            retry: 1
+        { 
+            retry: false,
+            onError: (error) => {
+                console.error('Analysis error:', error);
+            }
         }
     );
 
@@ -274,7 +247,7 @@ const CountryDetails = ({ country, data }) => {
                                     }}
                                 />
                                 {Array.from(new Set(projectsList.map(p => p.year)))
-                                    .sort((a, b) => b - a)  // 최신 연도순 정렬
+                                    .sort((a, b) => b - a)  // latest year first
                                     .map(year => (
                                         <Chip
                                             key={year}
@@ -325,71 +298,45 @@ const CountryDetails = ({ country, data }) => {
                 </Grid>
             </Grid>
 
-            {/* Strategic Analysis 섹션 */}
-            <Box sx={{ mt: 4 }}>
-                <Typography variant="h5" gutterBottom>Strategic Analysis</Typography>
-                
-                <Grid container spacing={2}>
-                    {/* 1. Investment Efficiency - 가장 중요한 수치만 */}
-                    <Grid item xs={4}>
-                        <Paper sx={{ p: 2, height: '100%' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Speed color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="h6">Investment Efficiency</Typography>
-                            </Box>
-                            <Typography variant="h3" color="primary" align="center" sx={{ mb: 2 }}>
-                                {analysisData?.efficiency?.metrics?.overall || 0}%
-                            </Typography>
-                            <Stack spacing={1}>
-                                {analysisData?.efficiency?.metrics?.costEffectiveness?.map(item => (
-                                    <Box key={item.category} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2">{item.category}</Typography>
-                                        <Typography variant="body2" color="primary">{item.score}%</Typography>
-                                    </Box>
-                                ))}
-                            </Stack>
-                        </Paper>
+            {/* World Bank analysis results */}
+            <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+                    World Bank Education Indicators
+                </Typography>
+                {analysisLoading ? (
+                    <CircularProgress />
+                ) : analysisData ? (
+                    <Grid container spacing={3}>
+                        {Object.entries(analysisData).map(([category, metrics]) => (
+                            <Grid item xs={12} md={4} key={category}>
+                                <Paper sx={{ p: 2 }}>
+                                    <Typography variant="h6" gutterBottom>
+                                        {category === 'basic_education' && '학습성과를 위한 양질의 교육'}
+                                        {category === 'digital_education' && '미래역량개발을 위한 디지털교육'}
+                                        {category === 'higher_education' && '인재양성을 위한 직업·고등교육'}
+                                    </Typography>
+                                    {metrics.map((metric, idx) => (
+                                        <Box key={idx} sx={{ mt: 2 }}>
+                                            <Typography variant="subtitle2">
+                                                {metric.name} ({metric.year})
+                                            </Typography>
+                                            <Typography variant="h4" color="primary">
+                                                {metric.value}%
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {metric.description}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                </Paper>
+                            </Grid>
+                        ))}
                     </Grid>
-
-                    {/* 2. Synergy  */}
-                    <Grid item xs={4}>
-                        <Paper sx={{ p: 2, height: '100%' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Hub color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="h6">Cross-sector Integration</Typography>
-                            </Box>
-                            <Typography variant="h3" color="primary" align="center" sx={{ mb: 2 }}>
-                                {analysisData?.synergy?.metrics?.balanceScore || 0}%
-                            </Typography>
-                            <Stack spacing={1}>
-                                {analysisData?.synergy?.distribution?.map(item => (
-                                    <Box key={item.category} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2">{item.category}</Typography>
-                                        <Typography variant="body2" color="primary">{item.percentage}%</Typography>
-                                    </Box>
-                                ))}
-                            </Stack>
-                        </Paper>
-                    </Grid>
-
-                    {/* 3. Sustainability */}
-                    <Grid item xs={4}>
-                        <Paper sx={{ p: 2, height: '100%' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <AutoGraph color="primary" sx={{ mr: 1 }} />
-                                <Typography variant="h6">Sustainability</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center', mb: 2 }}>
-                                {Object.entries(analysisData?.sustainability?.metrics || {}).map(([key, value]) => (
-                                    <Box key={key} sx={{ mb: 1 }}>
-                                        <Typography variant="body2">{key}</Typography>
-                                        <Typography variant="h5" color="primary">{value.score}%</Typography>
-                                    </Box>
-                                ))}
-                            </Box>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                ) : (
+                    <Alert severity="info">
+                        Error occurred while analyzing the data. Please try again later.
+                    </Alert>
+                )}
             </Box>
         </Box>
     );
