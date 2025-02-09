@@ -25,6 +25,33 @@ import {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF1493'];
 
+const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+
+    return (
+        <Box
+            sx={{
+                bgcolor: 'background.paper',
+                p: 1.5,
+                border: '1px solid #ccc',
+                borderRadius: 1,
+                minWidth: '200px',  
+                boxShadow: 1
+            }}
+        >
+            <Typography variant="body2" sx={{ mb: 0.5 }}>
+                {payload[0].payload.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+                Projects: {payload[0].value}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+                Investment: ${payload[0].payload.amount.toLocaleString()}
+            </Typography>
+        </Box>
+    );
+};
+
 const CountryDetails = ({ country, data }) => {
     // year filter
     const [selectedYear, setSelectedYear] = React.useState('all');
@@ -160,7 +187,7 @@ const CountryDetails = ({ country, data }) => {
                                                 />
                                             ))}
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <Box sx={{ mt: 2 }}>
