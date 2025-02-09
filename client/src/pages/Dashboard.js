@@ -18,9 +18,9 @@ const CONTINENT_VIEWS = {
 };
 
 const INVESTMENT_RANGES = {
-    high: { min: 100000000, color: "#FF6B6B" },  // red
-    medium: { min: 10000000, color: "#FFD93D" },  // yellow
-    low: { min: 0, color: "#6BCB77" }  // green
+    high: { min: 100000000, max: Infinity, color: "#FF6B6B" },  // >= 100M
+    medium: { min: 10000000, max: 100000000, color: "#FFD93D" },  // 10M-100M
+    low: { min: 0, max: 10000000, color: "#6BCB77" }  // < 10M
 };
 
 const Dashboard = () => {

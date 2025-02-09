@@ -80,11 +80,12 @@ const WorldMap = ({
     const getCountryColor = useCallback((amount) => {
         if (!selectedInvestmentRange) return colorScale(amount);
         
-        const range = investmentRanges[selectedInvestmentRange];  // use prop instead of INVESTMENT_RANGES
+        const range = investmentRanges[selectedInvestmentRange];
         if (!range) return "#F5F5F5";
         
-        return amount >= range.min ? range.color : "#F5F5F5";
-    }, [selectedInvestmentRange, investmentRanges, colorScale]);  // add dependency
+        // color when it's in the range
+        return (amount >= range.min && amount < range.max) ? range.color : "#F5F5F5";
+    }, [selectedInvestmentRange, investmentRanges, colorScale]);
 
     const handleDownload = () => {
         // download data of selected country
