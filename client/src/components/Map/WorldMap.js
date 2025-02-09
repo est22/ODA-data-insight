@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import { scaleLinear } from 'd3-scale';
-import { Box, Paper, Tooltip, IconButton } from '@mui/material';
+import { Box, Paper, Tooltip, IconButton, Typography } from '@mui/material';
 import { Add, Remove, FileDownload, Close } from '@mui/icons-material';
 import Papa from 'papaparse';
 import CountryDetails from '../Analysis/CountryDetails';
@@ -127,6 +127,24 @@ const WorldMap = ({
             flexDirection: 'column',
             overflow: 'hidden'
         }}>
+            {/* World Map Title */}
+            <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                    fontFamily: "'Roboto Condensed', sans-serif",
+                    fontWeight: 700,
+                    letterSpacing: 0.5,
+                    fontSize: '1.1rem',
+                    position: 'absolute',
+                    left: 16,
+                    top: 16,
+                    zIndex: 2
+                }}
+            >
+                World Map
+            </Typography>
+
             {/* map view control (+/-) */}
             {!selectedCountry && (
                 <Box sx={{ 

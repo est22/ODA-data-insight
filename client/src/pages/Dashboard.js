@@ -110,8 +110,21 @@ const Dashboard = () => {
     return (
         <Container maxWidth="xl">
             {/* Header Section */}
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h4" gutterBottom>
+            <Box sx={{ 
+                mt: 2,  // reduce top margin
+                mb: 3, 
+                textAlign: 'center' 
+            }}>
+                <Typography 
+                    variant="h4" 
+                    gutterBottom
+                    sx={{
+                        fontFamily: "'Roboto Condensed', sans-serif",
+                        fontWeight: 700, 
+                        letterSpacing: 1,
+                        fontSize: '2.2rem'
+                    }}
+                >
                     Education Development Analysis Dashboard
                 </Typography>
                 
@@ -136,7 +149,15 @@ const Dashboard = () => {
                         minWidth: '250px'
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ width: '100px' }}>Continent:</Typography>
+                            <Typography 
+                                sx={{ 
+                                    width: '100px',
+                                    fontFamily: "'Roboto Condensed', sans-serif",
+                                    fontWeight: 700
+                                }}
+                            >
+                                Continent:
+                            </Typography>
                             <Select
                                 value={selectedRegion}
                                 onChange={(e) => {
@@ -158,7 +179,15 @@ const Dashboard = () => {
                         </Box>
                         
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ width: '100px' }}>Investment:</Typography>
+                            <Typography 
+                                sx={{ 
+                                    width: '100px',
+                                    fontFamily: "'Roboto Condensed', sans-serif",
+                                    fontWeight: 700
+                                }}
+                            >
+                                Investment:
+                            </Typography>
                             <Select
                                 value={selectedInvestmentRange}
                                 onChange={(e) => setSelectedInvestmentRange(e.target.value)}

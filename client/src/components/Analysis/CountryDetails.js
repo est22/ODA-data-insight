@@ -57,7 +57,17 @@ const CountryDetails = ({ country, data }) => {
                 borderColor: 'divider' 
             }}>
                 <Box>
-                    <Typography variant="h5" gutterBottom>{country}</Typography>
+                    <Typography 
+                        variant="h5" 
+                        gutterBottom
+                        sx={{
+                            fontFamily: "'Roboto Condensed', sans-serif",
+                            fontWeight: 700,
+                            letterSpacing: 0.5
+                        }}
+                    >
+                        {country}
+                    </Typography>
                     <Typography variant="subtitle1" color="text.secondary">
                         Total Investment: ${(data.amount/1000000).toFixed(2)}M | Projects: {data.projects}
                     </Typography>
@@ -70,7 +80,17 @@ const CountryDetails = ({ country, data }) => {
                 {/* investment trends */}
                 <Grid item xs={12} md={8}>
                     <Paper elevation={0} variant="outlined" sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>Investment Trends</Typography>
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{
+                                fontFamily: "'Roboto Condensed', sans-serif",
+                                fontWeight: 700,
+                                letterSpacing: 0.5
+                            }}
+                        >
+                            Investment Trends
+                        </Typography>
                         {Array.isArray(data.trends) && data.trends.length > 0 ? (
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={data.trends}>
@@ -89,7 +109,17 @@ const CountryDetails = ({ country, data }) => {
                 {/* sector distribution */}
                 <Grid item xs={12} md={4}>
                     <Paper elevation={0} variant="outlined" sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>Sector Distribution</Typography>
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{
+                                fontFamily: "'Roboto Condensed', sans-serif",
+                                fontWeight: 700,
+                                letterSpacing: 0.5
+                            }}
+                        >
+                            Sector Distribution
+                        </Typography>
                         {sectorData.length > 0 ? (
                             <>
                                 <ResponsiveContainer width="100%" height={300}>
@@ -141,7 +171,17 @@ const CountryDetails = ({ country, data }) => {
                 {/* recent projects list */}
                 <Grid item xs={12}>
                     <Paper elevation={0} variant="outlined" sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>Recent Projects</Typography>
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{
+                                fontFamily: "'Roboto Condensed', sans-serif",
+                                fontWeight: 700,
+                                letterSpacing: 0.5
+                            }}
+                        >
+                            Recent Projects
+                        </Typography>
                         {projectsList.length > 0 ? (
                             <List sx={{ 
                                 maxHeight: '300px',  // 6 rows

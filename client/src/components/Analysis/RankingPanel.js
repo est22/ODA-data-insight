@@ -18,7 +18,16 @@ const RankingPanel = ({ data, onCountrySelect, selectedCountry }) => {
             display: 'flex',
             flexDirection: 'column'
         }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                    fontFamily: "'Roboto Condensed', sans-serif",
+                    fontWeight: 700,
+                    letterSpacing: 0.5,
+                    fontSize: '1.1rem'
+                }}
+            >
                 Recipient Countries Ranking
             </Typography>
             
@@ -62,7 +71,13 @@ const RankingPanel = ({ data, onCountrySelect, selectedCountry }) => {
                             <ListItemText
                                 primary={
                                     <Box display="flex" justifyContent="space-between">
-                                        <Typography variant="body1">
+                                        <Typography 
+                                            variant="body1"
+                                            sx={{
+                                                fontFamily: "'Roboto Condensed', sans-serif",
+                                                fontWeight: 400
+                                            }}
+                                        >
                                             {index + 1}. {country}
                                         </Typography>
                                         <Typography variant="body2">

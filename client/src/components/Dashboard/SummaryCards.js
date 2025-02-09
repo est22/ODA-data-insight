@@ -21,7 +21,14 @@ function OverviewCard({ title, value, icon, subtitle, color, tooltip }) {
         }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ color: color }}>{icon}</Box>
-                <Typography variant="subtitle2" color="text.secondary">
+                <Typography 
+                    variant="subtitle2" 
+                    color="text.secondary"
+                    sx={{
+                        fontFamily: "'Roboto Condensed', sans-serif",
+                        fontWeight: 700
+                    }}
+                >
                     {title}
                 </Typography>
             </Box>
