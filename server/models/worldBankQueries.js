@@ -3,8 +3,10 @@ const { db } = require('./model');
 const chalk = require('chalk');
 const cliProgress = require('cli-progress');
 
+const { getCountryIsoCode } = require('../services/worldBankService');
+
 const INDICATORS = {
-    basic_education: [
+    basic_education: [ 
         'SE.PRM.CMPT.ZS',     // Primary completion rate (% of relevant age group) - De Facto
         'SE.PRM.ENRR',        // School enrollment, primary (% gross) - De Facto
         'SE.PRM.TENR',        // Trained teachers in primary education (% of total teachers) - De Jure
@@ -73,9 +75,13 @@ async function fetchWorldBankData() {
             ORDER BY country
         `).all();
 
-        const countryList = countries.map(c => c.country).join(';');
+        const countryList = countries
+            .map(c => getCountryIsoCode(c.country))
+            .filter(code => code) // remove null values 
+            .join(';');
 
         console.log('\n' + chalk.cyan.bold('Initializing World Bank Data...') + '\n');
+        console.log('Countries to fetch:', countries.map(c => `${c.country} (${getCountryIsoCode(c.country)})`).join(', '));
 
         // Create progress bar
         const progressBar = new cliProgress.MultiBar({
@@ -89,7 +95,8 @@ async function fetchWorldBankData() {
 
         // Create progress bars for each category
         const bars = {};
-        for (const category of Object.keys(INDICATORS)) {
+        const categories = [...new Set(Object.keys(INDICATORS))];  // 중복 제거
+        for (const category of categories) {
             bars[category] = progressBar.create(INDICATORS[category].length, 0, {
                 category: chalk.yellow.bold(category.padEnd(20)),
                 indicator: ''
@@ -107,42 +114,55 @@ async function fetchWorldBankData() {
                     indicator: chalk.gray(`Loading: ${indicator}`)
                 });
 
-                const url = `http://api.worldbank.org/v2/country/${countryList}/indicator/${indicator}?format=json&per_page=1000&date=2015:2023`;
+                // 연도 범위를 더 넓게 설정
+                const url = `http://api.worldbank.org/v2/country/${countryList}/indicator/${indicator}?format=json&per_page=1000&date=2010:2023`;
                 
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (!data[1]) continue;
-
-                const insertStmt = db.prepare(`
-                    INSERT INTO world_bank_education (
-                        category, indicator_code, indicator_name,
-                        country, year, value
-                    ) VALUES (
-                        @category, @indicator_code, @indicator_name,
-                        @country, @year, @value
-                    )
-                `);
-
-                const insertMany = db.transaction((rows) => {
-                    for (const row of rows) {
-                        insertStmt.run(row);
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (!data || !data[1]) {
+                        console.log(`No data available for indicator: ${indicator}`);
+                        continue;
                     }
-                });
 
-                const rows = data[1].map(item => ({
-                    category,
-                    indicator_code: indicator,
-                    indicator_name: item.indicator.value,
-                    country: item.country.value,
-                    year: parseInt(item.date),
-                    value: parseFloat(item.value) || null
-                }));
+                    const insertStmt = db.prepare(`
+                        INSERT INTO world_bank_education (
+                            category, indicator_code, indicator_name,
+                            country, year, value
+                        ) VALUES (
+                            @category, @indicator_code, @indicator_name,
+                            @country, @year, @value
+                        )
+                    `);
 
-                insertMany(rows);
+                    const insertMany = db.transaction((rows) => {
+                        for (const row of rows) {
+                            if (row.value !== null) {  // null 값 제외
+                                insertStmt.run(row);
+                            }
+                        }
+                    });
 
-                // Add small delay to make progress visible
-                await new Promise(resolve => setTimeout(resolve, 100));
+                    const rows = data[1].map(item => ({
+                        category,
+                        indicator_code: indicator,
+                        indicator_name: item.indicator.value,
+                        country: item.country.value,
+                        year: parseInt(item.date),
+                        value: parseFloat(item.value)
+                    })).filter(row => row.value !== null);
+
+                    if (rows.length > 0) {
+                        insertMany(rows);
+                    }
+
+                } catch (error) {
+                    console.error(`Error fetching ${indicator}:`, error.message);
+                }
+
+                // delay to avoid API limit
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
 
@@ -160,6 +180,8 @@ function getWorldBankData() {
         ORDER BY category, year DESC
     `).all();
 }
+
+
 
 module.exports = {
     fetchWorldBankData,

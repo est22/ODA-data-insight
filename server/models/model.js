@@ -6,7 +6,9 @@ const dbPath = path.join(__dirname, '../data/ODA.db');
 
 function initializeDatabase() {
     try {
-        const db = new Database(dbPath);
+        const db = new Database(dbPath, {
+            // remove fileMustExist option to create a new DB file if needed
+        });
         
         db.prepare('DROP TABLE IF EXISTS oda_education').run();
         
@@ -103,7 +105,7 @@ const db = initializeDatabase();
 
 const initializeEducationTable = async () => {
     try {
-        // 테이블 생성
+        // create table
         await db.query(`
             CREATE TABLE IF NOT EXISTS education_projects (
                 id SERIAL PRIMARY KEY,
@@ -117,10 +119,10 @@ const initializeEducationTable = async () => {
             )
         `);
 
-        // 기존 데이터 확인
+        // check existing data
         const existingData = await db.query('SELECT COUNT(*) FROM education_projects');
         
-        // 데이터가 없는 경우에만 샘플 데이터 삽입
+        // insert sample data if no data exists
         if (existingData.rows[0].count === '0') {
             await db.query(`
                 INSERT INTO education_projects 

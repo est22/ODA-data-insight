@@ -20,6 +20,7 @@ This project is a full-stack application designed to provide sophisticated analy
       - [C. Sustainability Analysis](#c-sustainability-analysis)
   - [4. Analysis Methodology](#4-analysis-methodology)
     - [1. Data Collection](#1-data-collection)
+    - [Education Sectors](#education-sectors)
     - [2. Data Cleaning and Integration](#2-data-cleaning-and-integration)
     - [A. Investment Efficiency Analysis](#a-investment-efficiency-analysis-1)
     - [B. Synergy Analysis](#b-synergy-analysis-1)
@@ -224,10 +225,30 @@ Evaluates the long-term impact and sustainability of education projects after co
 ### 1. Data Collection  
 Education data was collected from [World Bank](https://databank.worldbank.org/source/education-statistics-%5e-all-indicators#) API, ensuring a globally recognized, standardized dataset. [KOICA’s SDG Performance Indicators](https://www.data.go.kr/data/15105461/fileData.do) dataset was also utilized to capture project-specific (education) investment details as in `server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`.
 
+
+### Education Sectors
+
+The project analyzes three main education sectors:
+
+1. 미래역량개발을 위한 디지털교육 (Digital Education for Future Competency)
+   - Focus: Digital literacy, ICT infrastructure, and technological innovation in education
+   - Key Indicators: Internet usage, R&D expenditure, technical journal publications
+
+2. 인재양성을 위한 직업·고등교육 (Higher Education for Human Resource Development)
+   - Focus: Tertiary education, vocational training, and advanced skill development
+   - Key Indicators: Tertiary enrollment, unemployment rates with advanced education
+
+3. 학습성과를 위한 양질의 교육 (Quality Basic Education for Learning Outcomes)
+   - Focus: Primary and secondary education quality and accessibility
+   - Key Indicators: Primary completion rate, qualified teachers ratio, literacy rate
+
+Note: The analysis interface maintains Korean sector names to align with KOICA's official documentation and project categorization (as per `server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`).
+
 ### 2. Data Cleaning and Integration  
 - Standardized country names and time periods across datasets
 - Aligned KOICA’s education initiatives with corresponding World Bank indicators
 - Merged investment and outcome datasets to facilitate comparative and correlation analyses
+
 
 ### A. Investment Efficiency Analysis  
 - Calculated year-over-year improvement rates for each education indicator 

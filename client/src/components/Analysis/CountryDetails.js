@@ -1,27 +1,12 @@
-import React from 'react';
-import { 
-    Box, 
-    Paper, 
-    Typography, 
-    IconButton,
-    List,
-    ListItem,
-    ListItemText,
-    Divider,
-    Grid,
-    Chip
-} from '@mui/material';
-import { 
-    LineChart, 
-    Line, 
-    XAxis, 
-    YAxis, 
-    Tooltip, 
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell
-} from 'recharts';
+import React, { useMemo } from 'react';
+import { Box, Paper, Typography, IconButton,List,ListItem,ListItemText,Divider,Grid,Chip,Stack } from '@mui/material';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import EfficiencyCard from './EfficiencyCard';
+import SynergyCard from './SynergyCard';
+import SustainabilityCard from './SustainabilityCard';
+import { useQuery } from '@tanstack/react-query';
+import { Speed, Hub, AutoGraph } from '@mui/icons-material';
+
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF1493'];
 
@@ -91,18 +76,62 @@ const CountryDetails = ({ country, data }) => {
             : projectsList.filter(project => project.year === selectedYear);
     }, [projectsList, selectedYear]);
 
+    // strategic analysis
+    const { data: analysisData, error } = useQuery(
+        ['analysis', country],
+        async () => {
+            try {
+                const [efficiencyRes, synergyRes, sustainabilityRes] = await Promise.all([
+                    fetch(`/analysis/efficiency?country=${country}`).then(r => {
+                        if (!r.ok) throw new Error('Efficiency fetch failed');
+                        return r.json();
+                    }),
+                    fetch(`/analysis/synergy?country=${country}`).then(r => {
+                        if (!r.ok) throw new Error('Synergy fetch failed');
+                        return r.json();
+                    }),
+                    fetch(`/analysis/sustainability?country=${country}`).then(r => {
+                        if (!r.ok) throw new Error('Sustainability fetch failed');
+                        return r.json();
+                    })
+                ]);
+
+                return {
+                    efficiency: efficiencyRes.data,
+                    synergy: synergyRes.data,
+                    sustainability: sustainabilityRes.data
+                };
+            } catch (error) {
+                console.error('Analysis data fetch error:', error);
+                return {
+                    efficiency: null,
+                    synergy: null,
+                    sustainability: null
+                };
+            }
+        },
+        {
+            enabled: !!country,
+            staleTime: 5 * 60 * 1000,
+            cacheTime: 30 * 60 * 1000,
+            retry: 1
+        }
+    );
+
     // if no data, render nothing
     if (!data) return null;
 
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                mb: 3, 
-                borderBottom: 1, 
-                pb: 2, 
-                borderColor: 'divider' 
+                backgroundColor: 'background.paper',
+                pb: 2,
+                borderBottom: 1,
+                borderColor: 'divider',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 3
             }}>
                 <Box>
                     <Typography 
@@ -120,8 +149,6 @@ const CountryDetails = ({ country, data }) => {
                         Total Investment: ${(data.amount/1000000).toFixed(2)}M | Projects: {data.projects}
                     </Typography>
                 </Box>
-
-
             </Box>
 
             <Grid container spacing={3}>
@@ -297,6 +324,73 @@ const CountryDetails = ({ country, data }) => {
                     </Paper>
                 </Grid>
             </Grid>
+
+            {/* Strategic Analysis 섹션 */}
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="h5" gutterBottom>Strategic Analysis</Typography>
+                
+                <Grid container spacing={2}>
+                    {/* 1. Investment Efficiency - 가장 중요한 수치만 */}
+                    <Grid item xs={4}>
+                        <Paper sx={{ p: 2, height: '100%' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Speed color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="h6">Investment Efficiency</Typography>
+                            </Box>
+                            <Typography variant="h3" color="primary" align="center" sx={{ mb: 2 }}>
+                                {analysisData?.efficiency?.metrics?.overall || 0}%
+                            </Typography>
+                            <Stack spacing={1}>
+                                {analysisData?.efficiency?.metrics?.costEffectiveness?.map(item => (
+                                    <Box key={item.category} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2">{item.category}</Typography>
+                                        <Typography variant="body2" color="primary">{item.score}%</Typography>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </Paper>
+                    </Grid>
+
+                    {/* 2. Synergy  */}
+                    <Grid item xs={4}>
+                        <Paper sx={{ p: 2, height: '100%' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Hub color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="h6">Cross-sector Integration</Typography>
+                            </Box>
+                            <Typography variant="h3" color="primary" align="center" sx={{ mb: 2 }}>
+                                {analysisData?.synergy?.metrics?.balanceScore || 0}%
+                            </Typography>
+                            <Stack spacing={1}>
+                                {analysisData?.synergy?.distribution?.map(item => (
+                                    <Box key={item.category} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2">{item.category}</Typography>
+                                        <Typography variant="body2" color="primary">{item.percentage}%</Typography>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </Paper>
+                    </Grid>
+
+                    {/* 3. Sustainability */}
+                    <Grid item xs={4}>
+                        <Paper sx={{ p: 2, height: '100%' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <AutoGraph color="primary" sx={{ mr: 1 }} />
+                                <Typography variant="h6">Sustainability</Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', mb: 2 }}>
+                                {Object.entries(analysisData?.sustainability?.metrics || {}).map(([key, value]) => (
+                                    <Box key={key} sx={{ mb: 1 }}>
+                                        <Typography variant="body2">{key}</Typography>
+                                        <Typography variant="h5" color="primary">{value.score}%</Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+                        </Paper>
+                    </Grid>
+                </Grid>
+            </Box>
         </Box>
     );
 };

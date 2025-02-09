@@ -28,7 +28,7 @@ const RankingPanel = ({ data, onCountrySelect, selectedCountry }) => {
                     fontSize: '1.1rem'
                 }}
             >
-                Recipient Countries Ranking
+                Investment Amount Ranking ($M)
             </Typography>
             
             <TextField
