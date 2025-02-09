@@ -75,12 +75,7 @@ async function getRealTimeAnalysis(req, res) {
             return res.status(500).json({ error: 'Internal server error: Indicators not loaded' });
         }
 
-        if (!countryCode) {
-            return res.status(404).json({ 
-                message: 'Country code not found',
-                country: country 
-            });
-        }
+      
 
         // use all indicators in INDICATORS
         const indicatorDescriptions = {

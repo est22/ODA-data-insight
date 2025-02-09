@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Typography, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, Tooltip, List, ListItem, ListItemText } from '@mui/material';
 import { 
     TrendingUp, 
     AccountTree, 
@@ -50,7 +50,8 @@ function OverviewCard({ title, value, icon, subtitle, color, tooltip }) {
             placement="bottom"
             sx={{ 
                 '& .MuiTooltip-tooltip': { 
-                    maxWidth: 'none',
+                    maxWidth: '600px',
+                    minWidth: '500px',
                     bgcolor: 'background.paper',
                     color: 'text.primary',
                     boxShadow: 1,
@@ -98,16 +99,22 @@ const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
         </Box>
     );
 
-    const sectorTooltip = (
+    const sectorTooltipContent = (
         <Box>
             <Typography variant="subtitle2" gutterBottom>Education Sectors:</Typography>
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {sectorsList.map((sector, idx) => (
-                    <li key={idx}>
-                        <Typography variant="body2">{sector}</Typography>
-                    </li>
-                ))}
-            </ul>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Typography variant="body2">
+                    • Basic Education <Typography component="span" sx={{ fontSize: '0.75rem' }}>(학습성과를 위한 양질의 교육)</Typography>
+                </Typography>
+                <Typography variant="body2">
+                    • Higher Education <Typography component="span" sx={{ fontSize: '0.75rem' }}>(인재양성을 위한 직업·고등교육)</Typography>
+                </Typography>
+                <Typography variant="body2">
+                    • Digital Education <Typography component="span" sx={{ fontSize: '0.75rem' }}>(미래역량개발을 위한 디지털교육)</Typography>
+                </Typography>
+                
+                
+            </Box>
         </Box>
     );
 
@@ -159,14 +166,34 @@ const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
                 color="#016BB6"
                 tooltip={projectsTooltip}
             />
-            <OverviewCard
-                title="Focus Sectors"
-                value={sectorsList.length}
-                icon={<Public />}
-                subtitle="Education sectors"
-                color="#FFD700"
-                tooltip={sectorTooltip}
-            />
+            <Tooltip 
+                title={sectorTooltipContent} 
+                arrow 
+                placement="bottom"
+                sx={{ 
+                    '& .MuiTooltip-tooltip': { 
+                        maxWidth: '600px', 
+                        minWidth: '500px', 
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        boxShadow: 1,
+                        p: 1.5,
+                        '& .MuiTooltip-arrow': {
+                            color: 'background.paper'
+                        }
+                    }
+                }}
+            >
+                <Box>
+                    <OverviewCard
+                        title="Focus Sectors"
+                        value={sectorsList.length}
+                        icon={<Public />}
+                        subtitle="Education sectors"
+                        color="#FFD700"
+                    />
+                </Box>
+            </Tooltip>
         </Box>
     );
 };

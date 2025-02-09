@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Paper, Typography, List,ListItem,ListItemText,Divider,Grid,Chip, Button, CircularProgress, Alert } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { Analytics } from '@mui/icons-material';
 
@@ -32,6 +32,105 @@ const CustomTooltip = ({ active, payload }) => {
             </Typography>
         </Box>
     );
+};
+
+
+const IndicatorChart = ({ metrics }) => {
+    const chartData = metrics.map(m => ({
+        subject: m.name,
+        value: m.value,
+        fullMark: 100
+    }));
+
+    // split text function for word wrap (radar chart label)
+    const splitText = (text) => {
+        const words = text.split(' ');
+        const midpoint = Math.ceil(words.length / 2);
+        
+        if (words.length <= 2) return [text]; // 짧은 텍스트는 한 줄로
+        
+        return [
+            words.slice(0, midpoint).join(' '),
+            words.slice(midpoint).join(' ')
+        ];
+    };
+
+    return (
+        <Box sx={{ height: 300, width: '100%' }}>
+            <ResponsiveContainer>
+                <RadarChart data={chartData}>
+                    <PolarGrid />
+                    <PolarAngleAxis 
+                        dataKey="subject" 
+                        tick={(props) => {
+                            const { x, y, payload } = props;
+                            const lines = splitText(payload.value);
+                            
+                            return (
+                                <text
+                                    x={x}
+                                    y={y - (lines.length > 1 ? 10 : 0)} // adjust position when two lines
+                                    textAnchor="middle"
+                                    fill="#000"
+                                    fontSize="0.65rem"
+                                >
+                                    {lines.map((line, i) => (
+                                        <tspan
+                                            key={i}
+                                            x={x}
+                                            dy={i === 0 ? 0 : 12} // adjust line spacing
+                                        >
+                                            {line}
+                                        </tspan>
+                                    ))}
+                                </text>
+                            );
+                        }}
+                    />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                    <Radar
+                        name="Indicators"
+                        dataKey="value"
+                        stroke="#FF1493"
+                        fill="#FF1493"
+                        fillOpacity={0.5}
+                    />
+                    <Tooltip 
+                        cursor={false}
+                        content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                return (
+                                    <Box sx={{ 
+                                        bgcolor: 'background.paper',
+                                        p: 1.5,
+                                        border: '1px solid #ccc',
+                                        borderRadius: 1,
+                                        boxShadow: 1
+                                    }}>
+                                        <Typography variant="body2">
+                                            {payload[0].payload.subject}
+                                        </Typography>
+                                        <Typography variant="body2" color="primary">
+                                            {payload[0].value}%
+                                        </Typography>
+                                    </Box>
+                                );
+                            }
+                            return null;
+                        }}
+                    />
+                </RadarChart>
+            </ResponsiveContainer>
+        </Box>
+    );
+};
+
+const sectorNameMap = {
+    '학습성과를 위한 양질의 교육': 'Basic Education',
+    '인재양성을 위한 직업·고등교육': 'Higher Education',
+    '미래역량개발을 위한 디지털교육': 'Digital Education'
+    
+    
 };
 
 const CountryDetails = ({ country, data }) => {
@@ -94,6 +193,29 @@ const CountryDetails = ({ country, data }) => {
     // if no data, render nothing
     if (!data) return null;
 
+    // 인사이트 생성 함수
+    const generateInsight = (category, metrics) => {
+        const mainMetric = metrics[0];
+        const avgValue = metrics.reduce((sum, m) => sum + m.value, 0) / metrics.length;
+
+        switch(category) {
+            case 'basic_education':
+                return `Basic education shows ${mainMetric.value > 75 ? 'strong' : 'moderate'} performance with ${mainMetric.value}% completion rate. ${
+                    avgValue > 70 ? 'Overall indicators suggest effective basic education system.' : 'There is room for improvement in basic education metrics.'
+                }`;
+            case 'digital_education':
+                return `Digital infrastructure is ${mainMetric.value > 60 ? 'well-developed' : 'developing'} with ${mainMetric.value}% internet penetration. ${
+                    avgValue > 50 ? 'Digital education readiness is positive.' : 'Digital education infrastructure needs strengthening.'
+                }`;
+            case 'higher_education':
+                return `Higher education enrollment at ${mainMetric.value}% indicates ${mainMetric.value > 40 ? 'good' : 'limited'} access. ${
+                    avgValue > 35 ? 'Tertiary education system shows promise.' : 'Higher education sector requires attention.'
+                }`;
+            default:
+                return '';
+        }
+    };
+
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ 
@@ -142,8 +264,14 @@ const CountryDetails = ({ country, data }) => {
                         {Array.isArray(data.trends) && data.trends.length > 0 ? (
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={data.trends}>
-                                    <XAxis dataKey="year" />
-                                    <YAxis tickFormatter={(value) => `$${(value/1000000).toFixed(1)}M`} />
+                                    <XAxis 
+                                        dataKey="year" 
+                                        style={{ fontSize: '0.75rem' }}  
+                                    />
+                                    <YAxis 
+                                        tickFormatter={(value) => `$${(value/1000000).toFixed(1)}M`}
+                                        style={{ fontSize: '0.75rem' }}
+                                    />
                                     <Tooltip formatter={(value) => [`$${(value/1000000).toFixed(2)}M`, "Investment"]} />
                                     <Line type="monotone" dataKey="amount" stroke="#8884d8" strokeWidth={2} />
                                 </LineChart>
@@ -198,11 +326,24 @@ const CountryDetails = ({ country, data }) => {
                                                     width: 12,
                                                     height: 12,
                                                     backgroundColor: COLORS[index % COLORS.length],
-                                                    mr: 1
+                                                    mr: 1,
+                                                    flexShrink: 0
                                                 }}
                                             />
-                                            <Typography variant="body2">
-                                                {entry.name}
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    fontSize: '0.75rem',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: '100%'
+                                                }}
+                                            >
+                                                <Box component="span" sx={{ fontWeight: 'bold' }}>
+                                                    {sectorNameMap[entry.name]}
+                                                </Box>
+                                                {` (${entry.name})`}
                                                 <br />
                                                 ({entry.value} projects, ${(entry.amount/1000000).toFixed(2)}M)
                                             </Typography>
@@ -280,7 +421,7 @@ const CountryDetails = ({ country, data }) => {
                                                         <Typography component="span" variant="body2" color="text.primary">
                                                             ${project.amount.toLocaleString()}
                                                         </Typography>
-                                                        {` — ${project.year} | ${project.sector}`}
+                                                        {` — ${project.year} | ${sectorNameMap[project.sector]} (${project.sector})`}
                                                     </React.Fragment>
                                                 }
                                             />
@@ -300,34 +441,76 @@ const CountryDetails = ({ country, data }) => {
 
             {/* World Bank analysis results */}
             <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-                    World Bank Education Indicators
+                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700 }}>
+                    Education Development Analysis
                 </Typography>
                 {analysisLoading ? (
-                    <CircularProgress />
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                        <CircularProgress />
+                    </Box>
                 ) : analysisData ? (
                     <Grid container spacing={3}>
                         {Object.entries(analysisData).map(([category, metrics]) => (
                             <Grid item xs={12} md={4} key={category}>
-                                <Paper sx={{ p: 2 }}>
-                                    <Typography variant="h6" gutterBottom>
-                                        {category === 'basic_education' && '학습성과를 위한 양질의 교육'}
-                                        {category === 'digital_education' && '미래역량개발을 위한 디지털교육'}
-                                        {category === 'higher_education' && '인재양성을 위한 직업·고등교육'}
+                                <Paper elevation={0} variant="outlined" sx={{ p: 2, height: '100%' }}>
+                                    <Typography 
+                                        variant="h6" 
+                                        gutterBottom 
+                                        sx={{ 
+                                            color: '#FF1493', 
+                                            mb: 2,
+                                            fontSize: '1.1rem',  // 폰트 크기 축소
+                                            fontFamily: "'Roboto Condensed', sans-serif",
+                                            fontWeight: 700,
+                                            letterSpacing: 0.5
+                                        }}
+                                    >
+                                        {category === 'basic_education' && 'Basic Education'}
+                                        {category === 'digital_education' && 'Digital Education'}
+                                        {category === 'higher_education' && 'Higher Education'}
                                     </Typography>
-                                    {metrics.map((metric, idx) => (
-                                        <Box key={idx} sx={{ mt: 2 }}>
-                                            <Typography variant="subtitle2">
-                                                {metric.name} ({metric.year})
-                                            </Typography>
-                                            <Typography variant="h4" color="primary">
-                                                {metric.value}%
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {metric.description}
-                                            </Typography>
-                                        </Box>
-                                    ))}
+
+                                    {/* Radar Chart */}
+                                    <IndicatorChart metrics={metrics} />
+
+                                    {/* Key Metrics */}
+                                    <Box sx={{ mt: 2 }}>
+                                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                            Key Metrics
+                                        </Typography>
+                                        <Grid container spacing={1}>
+                                            {metrics.slice(0, 3).map((metric, idx) => (
+                                                <Grid item xs={4} key={idx}>
+                                                    <Paper 
+                                                        elevation={0} 
+                                                        sx={{ 
+                                                            p: 1, 
+                                                            bgcolor: 'rgba(255, 20, 147, 0.1)',
+                                                            textAlign: 'center',
+                                                            height: '100%'
+                                                        }}
+                                                    >
+                                                        <Typography variant="caption" display="block">
+                                                            {metric.name}
+                                                        </Typography>
+                                                        <Typography variant="h6" color="primary">
+                                                            {metric.value}%
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            ({metric.year})
+                                                        </Typography>
+                                                    </Paper>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    </Box>
+
+                                    {/* Insights */}
+                                    <Box sx={{ mt: 2 }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {generateInsight(category, metrics)}
+                                        </Typography>
+                                    </Box>
                                 </Paper>
                             </Grid>
                         ))}
