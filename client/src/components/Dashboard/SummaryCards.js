@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Typography, Tooltip, List, ListItem, ListItemText } from '@mui/material';
+import { Box, Paper, Typography, Tooltip } from '@mui/material';
 import { 
     TrendingUp, 
     AccountTree, 
@@ -162,7 +162,7 @@ const SummaryCards = ({ totalInvestment, totalProjects, focusSectors }) => {
                 title="Total Projects"
                 value={formatNumber(totalProjects)}
                 icon={<AccountTree />}
-                subtitle="Active education projects"
+                subtitle="Education projects"
                 color="#016BB6"
                 tooltip={projectsTooltip}
             />

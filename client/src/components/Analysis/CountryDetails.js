@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Box, Paper, Typography, List,ListItem,ListItemText,Divider,Grid,Chip, Button, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Typography, List,ListItem,ListItemText,Divider,Grid,Chip, CircularProgress, Alert } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { Analytics } from '@mui/icons-material';
-
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF1493'];
 
@@ -33,7 +31,6 @@ const CustomTooltip = ({ active, payload }) => {
         </Box>
     );
 };
-
 
 const IndicatorChart = ({ metrics }) => {
     const chartData = metrics.map(m => ({
@@ -133,9 +130,11 @@ const sectorNameMap = {
     
 };
 
-const CountryDetails = ({ country, data }) => {
+const CountryDetails = ({ country, data, onClose }) => {
     const [selectedYear, setSelectedYear] = useState('all');
     
+
+
     // process sector data
     const sectorData = React.useMemo(() => {
         if (!data || !data.recentProjects || !Array.isArray(data.recentProjects)) return [];

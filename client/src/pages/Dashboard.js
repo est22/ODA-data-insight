@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Container, Typography, IconButton, Select, MenuItem } from '@mui/material';
-import { FileDownload } from '@mui/icons-material';
+import { Box, Container, Typography, Select, MenuItem } from '@mui/material';
 import SummaryCards from '../components/Dashboard/SummaryCards';
 import WorldMap from '../components/Map/WorldMap';
 import RankingPanel from '../components/Analysis/RankingPanel';
-import CountryDetails from '../components/Analysis/CountryDetails';
 import { useQuery } from '@tanstack/react-query';
+import { useTheme } from '@mui/material/styles';
 
 // continent center coordinates and zoom level settings
 const CONTINENT_VIEWS = {
@@ -27,7 +26,7 @@ const Dashboard = () => {
     const [selectedCountry, setSelectedCountry] = useState(null);
     const [selectedRegion, setSelectedRegion] = useState('All');
     const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('All Ranges');
-    const [mapView, setMapView] = useState(CONTINENT_VIEWS["All"]);
+    const theme = useTheme();
 
     // get summary data
     const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useQuery(
@@ -42,7 +41,7 @@ const Dashboard = () => {
     );
 
     // get project data
-    const { data: projectsData, isLoading: projectsLoading, error: projectsError } = useQuery(
+    const { isLoading: projectsLoading, error: projectsError } = useQuery(
         ['projects'],
         async () => {
             const response = await fetch('/education/projects');
@@ -115,12 +114,13 @@ const Dashboard = () => {
             }}>
                 <Typography 
                     variant="h4" 
-                    gutterBottom
-                    sx={{
+                    sx={{ 
+                        color: theme.palette.text.primary,
                         fontFamily: "'Roboto Condensed', sans-serif",
                         fontWeight: 700,
                         letterSpacing: 1,
-                        fontSize: '2.2rem'
+                        fontSize: '2.2rem',
+                        mb: 3 
                     }}
                 >
                     Education Development Analysis Dashboard
@@ -154,12 +154,15 @@ const Dashboard = () => {
                             gap: 2
                         }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography sx={{ fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700 }}>
+                                <Typography sx={{ 
+                                    fontFamily: "'Roboto Condensed', sans-serif", 
+                                    fontWeight: 700,
+                                    color: theme.palette.text.primary
+                                }}>
                                     Continent:
                                 </Typography>
                                 <Select value={selectedRegion} onChange={(e) => {
                                     setSelectedRegion(e.target.value);
-                                    setMapView(CONTINENT_VIEWS[e.target.value]);
                                 }} size="small" sx={{ width: 120 }}>
                                     <MenuItem value="All">All</MenuItem>
                                     <MenuItem value="Asia">Asia</MenuItem>
@@ -170,7 +173,11 @@ const Dashboard = () => {
                                 </Select>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography sx={{ fontFamily: "'Roboto Condensed', sans-serif", fontWeight: 700 }}>
+                                <Typography sx={{ 
+                                    fontFamily: "'Roboto Condensed', sans-serif", 
+                                    fontWeight: 700,
+                                    color: theme.palette.text.primary
+                                }}>
                                     Investment:
                                 </Typography>
                                 <Select 
