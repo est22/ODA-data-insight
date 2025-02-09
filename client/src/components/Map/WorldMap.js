@@ -91,34 +91,44 @@ const WorldMap = ({
     }, [selectedInvestmentRange, investmentRanges, colorScale]);
 
     const handleDownload = () => {
-        // download data of selected country
-        const exportData = selectedCountry ? 
-            [{
-                Country: selectedCountry,
-                'Total Investment (USD)': data[selectedCountry].amount,
-                'Number of Projects': data[selectedCountry].projects,
-                'Focus Sectors': data[selectedCountry].sectors.join(', '),
-                'Projects': data[selectedCountry].recentProjects.map(p => 
-                    `${p.name} (${p.year}, $${(p.amount/1000000).toFixed(2)}M)`
-                ).join('\n')
-            }] :
-            Object.entries(data).map(([country, info]) => ({
-                Country: country,
-                'Total Investment (USD)': info.amount,
-                'Number of Projects': info.projects,
-                'Focus Sectors': info.sectors.join(', '),
-                'Latest Project': info.recentProjects[0]?.name || 'N/A',
-                'Latest Investment': info.recentProjects[0]?.amount || 0
+        // 선택된 국가의 데이터만 다운로드하는 경우
+        if (selectedCountry) {
+            const countryData = data[selectedCountry];
+            const exportData = countryData.recentProjects.map(project => ({
+                'Country': selectedCountry,
+                'Project Name': project.name,
+                'Year': project.year,
+                'Sector': project.sector,
+                'Investment (USD)': project.amount.toLocaleString()
             }));
+            
+            const csvContent = Papa.unparse(exportData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${selectedCountry}_education_projects.csv`;
+            link.click();
+        } 
+        // when download country data
+        else {
+            const exportData = Object.entries(data).reduce((acc, [country, countryData]) => {
+                const countryProjects = countryData.recentProjects.map(project => ({
+                    'Country': country,
+                    'Project Name': project.name,
+                    'Year': project.year,
+                    'Sector': project.sector,
+                    'Investment (USD)': project.amount.toLocaleString()
+                }));
+                return [...acc, ...countryProjects];
+            }, []);
 
-        const csvContent = Papa.unparse(exportData);
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = selectedCountry ? 
-            `${selectedCountry}_education_data.csv` : 
-            'education_development_data.csv';
-        link.click();
+            const csvContent = Papa.unparse(exportData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'education_development_projects.csv';
+            link.click();
+        }
     };
 
     return (
