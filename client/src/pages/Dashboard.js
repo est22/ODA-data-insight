@@ -7,10 +7,29 @@ import RankingPanel from '../components/Analysis/RankingPanel';
 import CountryDetails from '../components/Analysis/CountryDetails';
 import { useQuery } from '@tanstack/react-query';
 
+// continent center coordinates and zoom level settings
+const CONTINENT_VIEWS = {
+    "All": { coordinates: [0, 0], zoom: 1 },
+    "Asia": { coordinates: [95, 20], zoom: 2 },
+    "Africa": { coordinates: [20, 0], zoom: 2 },
+    "Americas": { coordinates: [-60, 0], zoom: 1.5 },
+    "Europe": { coordinates: [15, 50], zoom: 2.5 },
+    "Oceania": { coordinates: [130, -20], zoom: 2.5 }
+};
+
+const INVESTMENT_RANGES = {
+    high: { min: 100000000, color: "#FF6B6B" },  // red
+    medium: { min: 10000000, color: "#FFD93D" },  // yellow
+    low: { min: 0, color: "#6BCB77" }  // green
+};
+
 const Dashboard = () => {
     const [selectedYear, setSelectedYear] = useState('2023');
     const [selectedSector, setSelectedSector] = useState('All Sectors');
     const [selectedCountry, setSelectedCountry] = useState(null);
+    const [selectedRegion, setSelectedRegion] = useState('');
+    const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('');
+    const [mapView, setMapView] = useState(CONTINENT_VIEWS["All"]);
 
     // get summary data
     const { data: summaryData, isLoading: summaryLoading, error: summaryError } = useQuery(
@@ -91,82 +110,91 @@ const Dashboard = () => {
     return (
         <Container maxWidth="xl">
             {/* Header Section */}
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                mb: 3 
-            }}>
-                <Typography variant="h4">
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="h4" gutterBottom>
                     Education Development Analysis Dashboard
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Select
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                        size="small"
-                    >
-                        <MenuItem value="2023">2023</MenuItem>
-                        <MenuItem value="2022">2022</MenuItem>
-                        <MenuItem value="2021">2021</MenuItem>
-                    </Select>
-                    <IconButton>
-                        <FileDownload />
-                    </IconButton>
+                
+                {/* Summary Cards with Filters */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: 2 
+                }}>
+                    <SummaryCards 
+                        totalInvestment={summaryData?.total_investment || 0}
+                        totalProjects={summaryData?.total_projects || 0}
+                        focusSectors={summaryData?.focus_sectors || []}
+                    />
+                    
+                    {/* New Filter Section */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        gap: 2,
+                        minWidth: '250px'
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ width: '100px' }}>Continent:</Typography>
+                            <Select
+                                value={selectedRegion}
+                                onChange={(e) => {
+                                    setSelectedRegion(e.target.value);
+                                    // change map view by passing to WorldMap
+                                    setMapView(CONTINENT_VIEWS[e.target.value]);
+                                }}
+                                size="small"
+                                fullWidth
+                                displayEmpty
+                            >
+                                <MenuItem value="">All</MenuItem>
+                                <MenuItem value="Asia">Asia</MenuItem>
+                                <MenuItem value="Africa">Africa</MenuItem>
+                                <MenuItem value="Americas">Americas</MenuItem>
+                                <MenuItem value="Europe">Europe</MenuItem>
+                                <MenuItem value="Oceania">Oceania</MenuItem>
+                            </Select>
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ width: '100px' }}>Investment:</Typography>
+                            <Select
+                                value={selectedInvestmentRange}
+                                onChange={(e) => setSelectedInvestmentRange(e.target.value)}
+                                size="small"
+                                fullWidth
+                                displayEmpty
+                            >
+                                <MenuItem value="">All Ranges</MenuItem>
+                                <MenuItem value="high">High (&gt;$100M)</MenuItem>
+                                <MenuItem value="medium">Medium ($10M-$100M)</MenuItem>
+                                <MenuItem value="low">Low (&lt;$10M)</MenuItem>
+                            </Select>
+                        </Box>
+                    </Box>
                 </Box>
             </Box>
 
-            {/* Summary Cards */}
-            <SummaryCards 
-                totalInvestment={summaryData?.total_investment || 0}
-                totalProjects={summaryData?.total_projects || 0}
-                focusSectors={summaryData?.focus_sectors || []}
-            />
-
             {/* Main Content */}
-            <Box sx={{ position: 'relative', mt: 3 }}>
-                {/* Filters */}
-                <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
-                    <Select
-                        value={selectedSector}
-                        onChange={(e) => setSelectedSector(e.target.value)}
-                        size="small"
-                    >
-                        <MenuItem value="All Sectors">All Sectors</MenuItem>
-                        {summaryData?.focus_sectors.map(sector => (
-                            <MenuItem key={sector} value={sector}>{sector}</MenuItem>
-                        ))}
-                    </Select>
-                </Box>
-
-                {/* Map and Rankings */}
-                <Box sx={{ display: 'flex', gap: 3 }}>
-                    <Box sx={{ flex: 3 }}>
-                        <WorldMap
-                            data={mapData}
-                            selectedCountry={selectedCountry}
-                            onCountrySelect={setSelectedCountry}
-                            year={selectedYear}
-                            sector={selectedSector}
-                        />
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                        <RankingPanel
-                            data={mapData}
-                            onCountrySelect={setSelectedCountry}
-                            selectedCountry={selectedCountry}
-                        />
-                    </Box>
-                </Box>
-
-                {/* Country Details Modal */}
-                {selectedCountry && (
-                    <CountryDetails
-                        country={selectedCountry}
-                        data={mapData?.[selectedCountry]}
-                        onClose={() => setSelectedCountry(null)}
+            <Box sx={{ display: 'flex', gap: 3, height: '600px' }}>
+                <Box sx={{ flex: 3, height: '100%' }}>
+                    <WorldMap
+                        data={mapData}
+                        selectedCountry={selectedCountry}
+                        onCountrySelect={setSelectedCountry}
+                        mapView={CONTINENT_VIEWS[selectedRegion]}
+                        selectedInvestmentRange={selectedInvestmentRange}
+                        investmentRanges={INVESTMENT_RANGES}
                     />
-                )}
+                </Box>
+                <Box sx={{ flex: 1, height: '100%' }}>
+                    <RankingPanel
+                        data={mapData}
+                        onCountrySelect={setSelectedCountry}
+                        selectedCountry={selectedCountry}
+                    />
+                </Box>
             </Box>
         </Container>
     );

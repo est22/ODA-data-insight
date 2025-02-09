@@ -10,7 +10,6 @@ import {
     Divider,
     Grid
 } from '@mui/material';
-import { Close } from '@mui/icons-material';
 import { 
     LineChart, 
     Line, 
@@ -25,7 +24,7 @@ import {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF1493'];
 
-const CountryDetails = ({ country, data, onClose }) => {
+const CountryDetails = ({ country, data }) => {
 
 
     // process sector data
@@ -38,13 +37,6 @@ const CountryDetails = ({ country, data, onClose }) => {
         return Object.entries(sectorCounts).map(([name, value]) => ({ name, value }));
     }, [data]);
 
-    // process trend data
-    const trendData = React.useMemo(() => {
-        if (!data || !data.trends || !Array.isArray(data.trends)) return [];
-        // sort years in descending order (latest year on the right)
-        return [...data.trends].sort((a, b) => a.year - b.year);
-    }, [data]);
-
     // process project data
     const projectsList = React.useMemo(() => {
         if (!data || !data.recentProjects) return [];
@@ -55,32 +47,23 @@ const CountryDetails = ({ country, data, onClose }) => {
     if (!data) return null;
 
     return (
-        <Paper
-            sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '80%',
-                maxWidth: 1000,
-                maxHeight: '90vh',
-                overflow: 'auto',
-                p: 3,
-                zIndex: 1000,
-                backgroundColor: 'white',
-                boxShadow: 24
-            }}
-        >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, borderBottom: 1, pb: 2, borderColor: 'divider' }}>
+        <Box sx={{ p: 3 }}>
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                mb: 3, 
+                borderBottom: 1, 
+                pb: 2, 
+                borderColor: 'divider' 
+            }}>
                 <Box>
                     <Typography variant="h5" gutterBottom>{country}</Typography>
                     <Typography variant="subtitle1" color="text.secondary">
                         Total Investment: ${(data.amount/1000000).toFixed(2)}M | Projects: {data.projects}
                     </Typography>
                 </Box>
-                <IconButton onClick={onClose}>
-                    <Close />
-                </IconButton>
+
+
             </Box>
 
             <Grid container spacing={3}>
@@ -160,7 +143,10 @@ const CountryDetails = ({ country, data, onClose }) => {
                     <Paper elevation={0} variant="outlined" sx={{ p: 2 }}>
                         <Typography variant="h6" gutterBottom>Recent Projects</Typography>
                         {projectsList.length > 0 ? (
-                            <List>
+                            <List sx={{ 
+                                maxHeight: '300px',  // 6 rows
+                                overflow: 'auto'     // scroll
+                            }}>
                                 {projectsList.map((project, index) => (
                                     <React.Fragment key={index}>
                                         <ListItem>
@@ -188,7 +174,7 @@ const CountryDetails = ({ country, data, onClose }) => {
                     </Paper>
                 </Grid>
             </Grid>
-        </Paper>
+        </Box>
     );
 };
 
