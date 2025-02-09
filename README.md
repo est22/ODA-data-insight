@@ -39,7 +39,9 @@ This project is a full-stack application designed to provide sophisticated analy
       - [3. Sustainability Score (10% of ROI)](#3-sustainability-score-10-of-roi)
       - [e.g. ROI Analysis Case Study: Sri Lanka](#eg-roi-analysis-case-study-sri-lanka)
   - [7. Technical Decision Diagram](#7-technical-decision-diagram)
-  - [Acknowledgments](#acknowledgments)
+  - [8. AI Tools Usage](#8-ai-tools-usage)
+    - [Development Acceleration with AI](#development-acceleration-with-ai)
+  - [9. Acknowledgments](#9-acknowledgments)
   - [Final Thoughts](#final-thoughts)
 
 
@@ -444,7 +446,17 @@ graph TD
     end
 ```
 
-## Acknowledgments  
+## 8. AI Tools Usage
+
+### Development Acceleration with AI
+
+This project primarily utilized Claude (Anthropic) as the main AI assistant for development. The AI assistant was particularly helpful in:
+- Designing the three-tier architecture
+- Implementing the ROI calculation methodology
+- Developing the data visualization components
+- Creating comprehensive documentation
+
+## 9. Acknowledgments  
 This analysis was made possible through high-quality data provided by **KOICA**, **OECD**, and the **World Bank**. Their commitment to transparent and accessible data plays a crucial role in advancing global education development efforts.  
 
 I extend my appreciation to these organizations for their contributions to evidence-based policymaking and sustainable development.  
