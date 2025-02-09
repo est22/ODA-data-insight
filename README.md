@@ -37,6 +37,8 @@ This project is a full-stack application designed to provide sophisticated analy
       - [1. Efficiency Score (70% of ROI)](#1-efficiency-score-70-of-roi)
       - [2. Synergy Score (20% of ROI)](#2-synergy-score-20-of-roi)
       - [3. Sustainability Score (10% of ROI)](#3-sustainability-score-10-of-roi)
+      - [e.g. ROI Analysis Case Study: Sri Lanka](#eg-roi-analysis-case-study-sri-lanka)
+  - [7. Technical Decision Diagram](#7-technical-decision-diagram)
   - [Acknowledgments](#acknowledgments)
   - [Final Thoughts](#final-thoughts)
 
@@ -296,7 +298,7 @@ Note: The analysis interface maintains Korean sector names to align with KOICA's
 
 ## 5. Dataset Choice Justification  
 
-In the landscape of international development cooperation, education emerges as a particularly compelling focus area, supported by comprehensive data sources and well-defined performance metrics. Our dataset selection was strategically guided by two primary sources that offer complementary perspectives on educational development initiatives.  
+In the landscape of international development cooperation, education emerges as a particularly compelling focus area, supported by comprehensive data sources and well-defined performance metrics. The dataset selection was strategically guided by two primary sources that offer complementary perspectives on educational development initiatives.  
 
 ### 📊 Primary Dataset: KOICA SDG Performance Indicators  
 
@@ -395,16 +397,7 @@ For example, in Sri Lanka's digital education:
   - Local ownership metrics
 
 
-## Acknowledgments  
-This analysis was made possible through high-quality data provided by **KOICA**, **OECD**, and the **World Bank**. Their commitment to transparent and accessible data plays a crucial role in advancing global education development efforts.  
-
-I extend my appreciation to these organizations for their contributions to evidence-based policymaking and sustainable development.  
-
-
-## Final Thoughts
- Hope this analysis contributes valuable insights to global education development efforts. Thank you for your interest!
-
-#### ROI Analysis Case Study: Sri Lanka
+#### e.g. ROI Analysis Case Study: Sri Lanka
 
 1. **Digital Education (ROI: 63.3%)**
    - High efficiency (30%) due to significant improvements in digital indicators
@@ -425,3 +418,38 @@ This case demonstrates how:
 - Digital education investments show highest returns in developing contexts
 - Basic education ROI can be lower when baseline metrics are already high
 - Higher education requires stronger institutional frameworks for success
+
+
+## 7. Technical Decision Diagram
+
+```mermaid
+graph TD
+    A[Data Layer] --> B[Processing Layer]
+    B --> C[Visualization Layer]
+    
+    subgraph Data Layer
+        A1[World Bank API] --> A2[React Query]
+        A2 --> A3[Data Fetching]
+    end
+    
+    subgraph Processing Layer
+        B1[Data Transformation] --> B2[ROI Calculation]
+        B2 --> B3[Investment Analysis]
+    end
+    
+    subgraph Visualization Layer
+        C1[Material-UI Components] --> C2[Interactive Dashboard]
+        C2 --> C3[Recharts Visualization]
+        C3 --> C4[Dynamic Filtering]
+    end
+```
+
+## Acknowledgments  
+This analysis was made possible through high-quality data provided by **KOICA**, **OECD**, and the **World Bank**. Their commitment to transparent and accessible data plays a crucial role in advancing global education development efforts.  
+
+I extend my appreciation to these organizations for their contributions to evidence-based policymaking and sustainable development.  
+
+
+## Final Thoughts
+ Hope this analysis contributes valuable insights to global education development efforts. Thank you for your interest!
+
