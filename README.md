@@ -1,9 +1,11 @@
 # ODA  data Analysis on Education
 
+
 ## 1. Project Overview
 
 This project is a full-stack application designed to provide sophisticated analysis of educational development projects, focusing on investment efficiency, synergistic effects, and sustainability of educational initiatives across different countries.
 
+<img width="1706" alt="image" src="https://github.com/user-attachments/assets/8adf2228-48ff-4b0d-a016-a163a6cfb1b1" />
 
 
 
@@ -42,6 +44,7 @@ This project is a full-stack application designed to provide sophisticated analy
   - [8. AI Tools Usage](#8-ai-tools-usage)
     - [Development Acceleration with AI](#development-acceleration-with-ai)
   - [9. Acknowledgments](#9-acknowledgments)
+  - [10. Overview](#10-overview)
   - [Final Thoughts](#final-thoughts)
 
 
@@ -460,6 +463,27 @@ This project primarily utilized Claude (Anthropic) as the main AI assistant for 
 This analysis was made possible through high-quality data provided by **KOICA**, **OECD**, and the **World Bank**. Their commitment to transparent and accessible data plays a crucial role in advancing global education development efforts.  
 
 I extend my appreciation to these organizations for their contributions to evidence-based policymaking and sustainable development.  
+
+## 10. Overview
+- Continent / Investment Range Filter Option
+<img width="1722" alt="image" src="https://github.com/user-attachments/assets/67f46343-a078-493c-b435-8b5ef3fdd2a8" />
+
+- Investment Trends, Sector Distribution
+<img width="1701" alt="image" src="https://github.com/user-attachments/assets/83577a2f-e0ac-4d38-8b53-9ae5095ac7a6" />
+
+- Recent Projects
+<img width="1697" alt="image" src="https://github.com/user-attachments/assets/3223e8b6-e98a-435e-898a-7935f07c068a" />
+
+- Education Development Analysis, ROI Analysis by Sector
+<img width="1705" alt="image" src="https://github.com/user-attachments/assets/b023483d-0600-4c29-a095-ac5fba82c9fd" />
+
+- DarkMode
+<img width="1700" alt="image" src="https://github.com/user-attachments/assets/6f2085a9-c6cd-482d-a09c-62517ad8e3a6" />
+
+- [Video Recording](https://youtu.be/DngdgJBFVPA)
+
+
+
 
 
 ## Final Thoughts
