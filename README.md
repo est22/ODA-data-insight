@@ -305,7 +305,7 @@ Note: The analysis interface maintains Korean sector names to align with KOICA's
 
 In the landscape of international development cooperation, education emerges as a particularly compelling focus area, supported by comprehensive data sources and well-defined performance metrics. The dataset selection was strategically guided by two primary sources that offer complementary perspectives on educational development initiatives.  
 
-### 📊 Primary Dataset: KOICA SDG Performance Indicators  
+### 📊 Primary Dataset: ODA data provided by USPC (filtered KOICA SDG Performance Indicators)
 
 The first cornerstone of our analysis is derived from KOICA's **SDG Performance Indicators** (original source from https://www.data.go.kr/data/15105461/fileData.do as in `server/data/한국국제협력단_SDG 분야별 성과지표_20230901.csv`). This dataset provides a **strategic classification** of educational initiatives into three core categories:  
 
